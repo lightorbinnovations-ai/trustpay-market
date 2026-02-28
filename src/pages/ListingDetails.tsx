@@ -197,7 +197,8 @@ const ListingDetails = () => {
               transition={{ delay: 0.3 }}
               onClick={() => {
                 triggerHaptic("light");
-                const shareLink = `https://t.me/TrustPayMarketsBot?start=listing_${id}`;
+                const marketBot = import.meta.env.VITE_MARKET_BOT_USERNAME || "TrustPayMarketsBot";
+                const shareLink = `https://t.me/${marketBot}?start=listing_${id}`;
                 const shareText = `${listing.title} - ${formatPrice(listing.price || 0, listing.country)}`;
                 const tg = (window as any).Telegram?.WebApp;
                 if (tg?.openTelegramLink) {
@@ -241,11 +242,10 @@ const ListingDetails = () => {
               <MapPin className="w-3 h-3" /> {listing.city}
             </span>
           )}
-          <span className={`text-xs font-semibold px-3 py-1.5 rounded-full capitalize ${
-            listing.status === "active" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
-            listing.status === "sold" ? "bg-accent text-accent-foreground" :
-            "bg-secondary text-muted-foreground"
-          }`}>{listing.status}</span>
+          <span className={`text-xs font-semibold px-3 py-1.5 rounded-full capitalize ${listing.status === "active" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+              listing.status === "sold" ? "bg-accent text-accent-foreground" :
+                "bg-secondary text-muted-foreground"
+            }`}>{listing.status}</span>
         </motion.div>
 
         <motion.div variants={fadeUp} className="h-px bg-border my-5" />

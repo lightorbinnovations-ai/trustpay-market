@@ -28,7 +28,7 @@ const TelegramGate = forwardRef<HTMLDivElement>((_, ref) => {
         </p>
 
         <a
-          href="https://t.me/TrustPayMarketsBot"
+          href={`https://t.me/${import.meta.env.VITE_MARKET_BOT_USERNAME || "TrustPayMarketsBot"}`}
           target="_blank"
           rel="noopener noreferrer"
           className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-base shadow-lg shadow-primary/25 active:scale-[0.98] transition-transform"

@@ -73,7 +73,10 @@ const Profile = () => {
               Please open this app from Telegram to link your account.
             </p>
             <button
-              onClick={() => window.open("https://t.me/TrustPayMarketsBot", "_blank")}
+              onClick={() => {
+                const marketBot = import.meta.env.VITE_MARKET_BOT_USERNAME || "TrustPayMarketsBot";
+                window.open(`https://t.me/${marketBot}`, "_blank");
+              }}
               className="mt-3 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
             >
               Open in Telegram

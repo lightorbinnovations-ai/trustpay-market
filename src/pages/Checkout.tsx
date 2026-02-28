@@ -148,7 +148,8 @@ const Checkout = () => {
       triggerHaptic("heavy");
       queryClient.invalidateQueries({ queryKey: ["checkout-tx"] });
       toast({ title: "Escrow started ✅", description: "Redirecting to escrow bot..." });
-      const deepLink = `https://t.me/TrustPay9jaBot?start=escrow_${listing!.id}`;
+      const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
+      const deepLink = `https://t.me/${escrowBot}?start=escrow_${listing!.id}`;
       window.open(deepLink, "_blank");
     },
     onError: (err: any) => {
@@ -193,9 +194,9 @@ const Checkout = () => {
           <motion.div
             variants={fadeUp}
             className={`mt-5 flex items-center gap-3 p-4 rounded-2xl border ${txStatus === "released" ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800" :
-                txStatus === "disputed" ? "bg-destructive/5 border-destructive/20" :
-                  txStatus === "paid" ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800" :
-                    "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800"
+              txStatus === "disputed" ? "bg-destructive/5 border-destructive/20" :
+                txStatus === "paid" ? "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800" :
+                  "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800"
               }`}
           >
             <statusInfo.icon className={`w-6 h-6 shrink-0 ${statusInfo.color}`} />
@@ -264,10 +265,10 @@ const Checkout = () => {
                   <div key={s.step} className="flex items-start gap-3">
                     <div className="flex flex-col items-center">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDisputed ? "bg-destructive/10" :
-                          isActive ? "bg-primary/10" : "bg-secondary"
+                        isActive ? "bg-primary/10" : "bg-secondary"
                         }`}>
                         <Icon className={`w-4 h-4 ${isDisputed ? "text-destructive" :
-                            isActive ? "text-primary" : "text-muted-foreground/40"
+                          isActive ? "text-primary" : "text-muted-foreground/40"
                           }`} />
                       </div>
                       {i < 2 && (
@@ -276,7 +277,7 @@ const Checkout = () => {
                     </div>
                     <div className="pt-1.5">
                       <p className={`text-xs font-semibold ${isDisputed ? "text-destructive" :
-                          isActive ? "text-foreground" : "text-muted-foreground/50"
+                        isActive ? "text-foreground" : "text-muted-foreground/50"
                         }`}>
                         {isDisputed ? "Disputed" : s.label}
                       </p>
@@ -298,7 +299,8 @@ const Checkout = () => {
                   triggerHaptic("heavy");
                   if (txStatus === "pending") {
                     // Already have a pending tx, just open the bot
-                    const deepLink = `https://t.me/TrustPay9jaBot?start=escrow_${listing.id}`;
+                    const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
+                    const deepLink = `https://t.me/${escrowBot}?start=escrow_${listing.id}`;
                     window.open(deepLink, "_blank");
                   } else {
                     startEscrow.mutate();
@@ -327,7 +329,8 @@ const Checkout = () => {
               whileTap={{ scale: 0.97 }}
               onClick={() => {
                 triggerHaptic("light");
-                window.open(`https://t.me/TrustPay9jaBot`, "_blank");
+                const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
+                window.open(`https://t.me/${escrowBot}`, "_blank");
               }}
               className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-base shadow-lg shadow-primary/25"
             >
@@ -344,7 +347,11 @@ const Checkout = () => {
           ) : (
             <motion.button
               whileTap={{ scale: 0.97 }}
-              onClick={() => { triggerHaptic("light"); window.open("https://t.me/TrustPaySupport", "_blank"); }}
+              onClick={() => {
+                triggerHaptic("light");
+                const supportBot = import.meta.env.VITE_SUPPORT_BOT_USERNAME || "TrustPaySupport";
+                window.open(`https://t.me/${supportBot}`, "_blank");
+              }}
               className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-destructive text-destructive-foreground font-semibold text-base shadow-lg shadow-destructive/25"
             >
               <AlertTriangle className="w-5 h-5" /> Contact Support

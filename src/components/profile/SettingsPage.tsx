@@ -336,7 +336,10 @@ const SettingsPage = () => {
                 <div className="p-4 bg-accent/30">
                   <p className="text-xs text-muted-foreground">Need more help?</p>
                   <button
-                    onClick={() => window.open("https://t.me/TrustPaySupport", "_blank")}
+                    onClick={() => {
+                      const supportBot = import.meta.env.VITE_SUPPORT_BOT_USERNAME || "TrustPaySupport";
+                      window.open(`https://t.me/${supportBot}`, "_blank");
+                    }}
                     className="mt-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
                   >
                     Contact Support

@@ -62,11 +62,10 @@ const AppHeader = () => {
             {/* Avatar — opens sidebar */}
             <button
               onClick={() => { triggerHaptic("light"); setSheetOpen(true); }}
-              className={`w-9 h-9 rounded-full flex items-center justify-center shadow-sm overflow-hidden ${
-                isGuest
+              className={`w-9 h-9 rounded-full flex items-center justify-center shadow-sm overflow-hidden ${isGuest
                   ? "bg-destructive/20 border-2 border-destructive/40"
                   : "bg-gradient-to-br from-primary to-primary/60"
-              }`}
+                }`}
             >
               {!isGuest && user.photo_url ? (
                 <img src={user.photo_url} alt={user.first_name} className="w-full h-full object-cover" />
@@ -139,11 +138,10 @@ const AppHeader = () => {
 
           {/* User info */}
           <div className="flex items-center gap-3 px-5 pt-8 pb-5 border-b border-border/50">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm overflow-hidden shrink-0 ${
-              isGuest
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm overflow-hidden shrink-0 ${isGuest
                 ? "bg-destructive/20 border-2 border-destructive/40"
                 : "bg-gradient-to-br from-primary to-primary/60"
-            }`}>
+              }`}>
               {!isGuest && user.photo_url ? (
                 <img src={user.photo_url} alt={user.first_name} className="w-full h-full object-cover" />
               ) : (
@@ -167,7 +165,10 @@ const AppHeader = () => {
               <div>
                 <p className="text-xs font-bold text-foreground">Not connected to Telegram</p>
                 <button
-                  onClick={() => window.open("https://t.me/TrustPayMarketsBot", "_blank")}
+                  onClick={() => {
+                    const marketBot = import.meta.env.VITE_MARKET_BOT_USERNAME || "TrustPayMarketsBot";
+                    window.open(`https://t.me/${marketBot}`, "_blank");
+                  }}
                   className="mt-2 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold"
                 >
                   Open in Telegram
@@ -219,7 +220,11 @@ const AppHeader = () => {
           {/* Other bot link */}
           <div className="px-4 pb-5 mt-auto border-t border-border/50 pt-4">
             <button
-              onClick={() => { triggerHaptic("light"); window.open("https://t.me/TrustPay9jaBot", "_blank"); }}
+              onClick={() => {
+                triggerHaptic("light");
+                const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
+                window.open(`https://t.me/${escrowBot}`, "_blank");
+              }}
               className="flex items-center gap-3 p-3 rounded-xl bg-accent/50 hover:bg-accent transition-colors text-left w-full"
             >
               <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
