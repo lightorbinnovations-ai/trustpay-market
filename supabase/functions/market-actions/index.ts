@@ -136,11 +136,16 @@ serve(async (req) => {
       }
 
       case "create_transaction": {
-        const { amount, type, reference, status, metadata } = payload;
+        const { amount, listing_id, seller_telegram_id, status } = payload;
+
         const { data, error } = await supabaseClient.from("transactions").insert({
-          telegram_id: userId,
-          amount, type, reference, status, metadata
+          buyer_telegram_id: parseInt(userId),
+          seller_telegram_id,
+          listing_id,
+          amount,
+          status: status || "pending"
         }).select().single();
+
         if (error) throw error;
         result = { success: true, transaction: data };
         break;

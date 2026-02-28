@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const TELEGRAM_API = "https://api.telegram.org/bot";
 const BANNER_URL = "https://wovbwtextiqakzowoypf.supabase.co/storage/v1/object/public/listing-images/bot%2Fwelcome-banner.jpg";
-const MINI_APP_URL = "https://trustpaymarket.lovable.app";
+const MINI_APP_URL = "https://trustpay-market.vercel.app";
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
