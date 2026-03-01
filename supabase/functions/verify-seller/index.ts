@@ -13,7 +13,7 @@ const VERIFIED_STARS = 90;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
