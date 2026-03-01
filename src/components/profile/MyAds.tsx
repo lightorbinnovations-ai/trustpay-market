@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Trash2, Pause, Play, Star, ExternalLink, Plus } from "lucide-react";
+import { Loader2, Trash2, Pause, Play, Star, ExternalLink, Plus, Edit2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTelegramUser, triggerHaptic } from "@/hooks/useTelegramUser";
@@ -173,6 +173,12 @@ const MyAds = () => {
                     <ExternalLink className="w-3 h-3" /> Link
                   </button>
                 )}
+                <button
+                  onClick={() => { triggerHaptic("light"); navigate(`/edit-ad/${ad.id}`); }}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-accent text-accent-foreground text-xs font-semibold"
+                >
+                  <Edit2 className="w-3 h-3" /> Edit
+                </button>
                 <button
                   onClick={() => { triggerHaptic("light"); setDeleteTarget({ id: ad.id, title: ad.title }); }}
                   className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-destructive/10 text-destructive text-xs font-semibold ml-auto"

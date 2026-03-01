@@ -21,6 +21,7 @@ import Favorites from "./pages/Favorites";
 import Placeholder from "./pages/Placeholder";
 import AdminDashboard from "./pages/AdminDashboard";
 import CreateAd from "./pages/CreateAd";
+import EditAd from "./pages/EditAd";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
 
@@ -52,6 +53,7 @@ const App = () => {
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/create-ad" element={<CreateAd />} />
+              <Route path="/edit-ad/:id" element={<EditAd />} />
               <Route path="/admin" element={<AdminDashboard />} />
             </Route>
             <Route path="*" element={<NotFound />} />

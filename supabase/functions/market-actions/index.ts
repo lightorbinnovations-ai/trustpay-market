@@ -138,6 +138,25 @@ Deno.serve(async (req) => {
         break;
       }
 
+      case "edit_ad": {
+        const { id, title, description, target_url } = payload;
+        const { data: ad } = await supabaseClient.from("ads").select("owner_telegram_id").eq("id", id).single();
+        if (!ad || ad.owner_telegram_id !== userId) throw new Error("Unauthorized");
+
+        const { error } = await supabaseClient
+          .from("ads")
+          .update({
+            title,
+            description,
+            link_url: target_url
+          })
+          .eq("id", id);
+
+        if (error) throw error;
+        result = { success: true };
+        break;
+      }
+
       case "create_transaction": {
         const { amount, listing_id, seller_telegram_id, status } = payload;
 
