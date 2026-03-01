@@ -28,7 +28,7 @@ serve(async (req) => {
     }
 
     const tgUser = validateTelegramWebAppData(initData, botToken);
-    const userId = tgUser.id.toString();
+    const userId = tgUser.id; // Keep as number
 
     // 2. Parse Payload
     const { action, payload } = await req.json();
@@ -36,12 +36,12 @@ serve(async (req) => {
 
     switch (action) {
       case "create_listing": {
-        const { title, description, price, category, condition, image_urls, is_negotiable, type, city, latitude, longitude, country } = payload;
+        const { title, description, price, category, type, city, latitude, longitude, country } = payload;
 
         const { data, error } = await supabaseClient
           .from("listings")
           .insert({
-            title, description, price, category, condition, image_urls, is_negotiable,
+            title, description, price, category,
             type: type || "item", city, latitude, longitude, country,
             seller_telegram_id: userId,
             status: "active"
