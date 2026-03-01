@@ -149,7 +149,7 @@ const Checkout = () => {
       queryClient.invalidateQueries({ queryKey: ["checkout-tx"] });
       toast({ title: "Escrow started ✅", description: "Redirecting to escrow bot..." });
       const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
-      const deepLink = `https://t.me/${escrowBot}?start=escrow_${listing!.id}`;
+      const deepLink = `https://t.me/${escrowBot}?startapp=escrow_${listing!.id}`;
       window.open(deepLink, "_blank");
     },
     onError: (err: any) => {
@@ -300,7 +300,7 @@ const Checkout = () => {
                   if (txStatus === "pending") {
                     // Already have a pending tx, just open the bot
                     const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
-                    const deepLink = `https://t.me/${escrowBot}?start=escrow_${listing.id}`;
+                    const deepLink = `https://t.me/${escrowBot}?startapp=escrow_${listing.id}`;
                     window.open(deepLink, "_blank");
                   } else {
                     startEscrow.mutate();
