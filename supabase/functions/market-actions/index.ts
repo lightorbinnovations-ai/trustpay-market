@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { validateTelegramWebAppData } from "../_shared/telegram-auth.ts";
 
@@ -8,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -143,7 +142,7 @@ serve(async (req) => {
         const { amount, listing_id, seller_telegram_id, status } = payload;
 
         const { data, error } = await supabaseClient.from("transactions").insert({
-          buyer_telegram_id: parseInt(userId),
+          buyer_telegram_id: userId,
           seller_telegram_id,
           listing_id,
           amount,
@@ -217,7 +216,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
-  } catch (error) {
+  } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,
