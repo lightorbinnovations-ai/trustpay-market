@@ -1,12 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Supabase details
 const supabaseUrl = "https://iqvkbmaiojuxzygscirc.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxdmtibWFpb2p1eHp5Z3NjaXJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNzQ1MjIsImV4cCI6MjA4Nzg1MDUyMn0.SpB92Iljf05D3zjyY0_Ew10rO-hgQOZN7zmDark20mY";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const categories = ["Electronics", "Vehicles", "Fashion", "Real Estate", "Services", "Jobs"];
+const categories = ["Gadgets", "Fashion", "Food & Beverages", "Beauty & Wellness", "Repairs", "Electrical", "Cleaning"];
 const cities = ["Lagos", "Abuja", "Port Harcourt", "Kano", "Ibadan"];
 const types = ["item", "service"];
 
@@ -14,107 +13,103 @@ function randInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function randElement(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
-}
-
 async function seed() {
     console.log("Starting DB seeding...");
 
-    // Get some users
-    const { data: users, error: userErr } = await supabase.from("bot_users").select("*").limit(10);
-    if (userErr || !users || users.length < 2) {
-        console.error("Need at least 2 users in bot_users table to create transactions.", userErr);
-
-        // Instead of failing, let's create a couple of fake users.
-        const fakeUsers = [
-            { telegram_id: 111111111, first_name: "QA Buyer", username: "qa_buyer" },
-            { telegram_id: 222222222, first_name: "QA Seller", username: "qa_seller" }
-        ];
-        await supabase.from("bot_users").upsert(fakeUsers, { onConflict: "telegram_id" });
-        const { data: newUsers } = await supabase.from("bot_users").select("*").in("telegram_id", [111111111, 222222222]);
-        users.push(...newUsers);
+    // Get some users from bot_users
+    const { data: users, error: userError } = await supabase.from("bot_users").select("telegram_id, username").limit(5);
+    if (userError || !users?.length) {
+        console.error("Could not find users in 'bot_users'. Error:", userError);
+        console.log("Attempting to create a dummy user first...");
+        const dummyId = 99999999;
+        const { error: insError } = await supabase.from("bot_users").insert({
+            telegram_id: dummyId,
+            username: "qa_tester",
+            first_name: "QA",
+            country: "Nigeria"
+        });
+        if (insError) {
+            console.error("Failed to create dummy user:", insError);
+            return;
+        }
+        users.push({ telegram_id: dummyId, username: "qa_tester" });
     }
 
-    // 1. Create 30 Listings
-    const listings = [];
+    const sellerId = users[0].telegram_id;
+    const buyerId = users[users.length - 1].telegram_id;
+
+    console.log(`Using Seller ID: ${sellerId}`);
+    console.log(`Using Buyer ID: ${buyerId}`);
+
+    // Clean up existing QA items
+    console.log("Cleaning up old QA data...");
+    await supabase.from("listings").delete().like("title", "QA Premium%");
+    await supabase.from("ads").delete().like("title", "Premium Sponsor Ad%");
+
+    // 1. Create Listings
+    console.log("Creating 30 listings...");
+    const listingRows = [];
     for (let i = 1; i <= 30; i++) {
-        const seller = randElement(users);
-        const category = randElement(categories);
-        const type = randElement(types);
-        listings.push({
-            title: `QA Premium ${category} Item #${i}`,
-            description: `This is a high-quality QA seeded listing for ${category}. Great condition and ready for immediate transaction via Escrow. Includes all original accessories.`,
-            price: randInt(5000, 5000000), // Naira
-            category: category,
-            city: randElement(cities),
-            country: "Nigeria",
+        const cat = categories[i % categories.length];
+        const type = types[i % types.length];
+        const city = cities[i % cities.length];
+        listingRows.push({
+            title: `QA Premium ${cat} Item #${i}`,
+            description: `This is a high-quality ${type} in the ${cat} category, located in ${city}. Perfect for robust QA testing.`,
+            price: randInt(5000, 500000),
+            category: cat,
             type: type,
-            seller_telegram_id: seller.telegram_id,
+            city: city,
+            country: "Nigeria",
+            seller_telegram_id: sellerId,
             status: "active",
-            // give a few a boosted status
-            boosted_until: Math.random() > 0.8 ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() : null
+            boosted_until: (i % 5 === 0) ? new Date(Date.now() + 86400000 * 7).toISOString() : null
         });
     }
 
-    const { data: insertedListings, error: listingErr } = await supabase.from("listings").insert(listings).select();
-    if (listingErr) {
-        console.error("Error inserting listings:", listingErr);
+    const { data: insertedListings, error: lError } = await supabase.from("listings").insert(listingRows).select();
+    if (lError) {
+        console.error("Listings insert failed:", lError);
         return;
     }
     console.log(`Inserted ${insertedListings.length} listings.`);
 
-    // 2. Create Transactions for Escrow (Some pending, some paid, some released)
-    const transactions = [];
+    // 2. Create Transactions
+    console.log("Creating 20 transactions...");
     const statuses = ["pending", "paid", "released", "disputed", "refunded"];
-
+    const transactions = [];
     for (let i = 0; i < 20; i++) {
-        const listing = randElement(insertedListings);
-        let buyer;
-        do {
-            buyer = randElement(users);
-        } while (buyer.telegram_id === listing.seller_telegram_id && users.length > 1); // Avoid self-buy
-
+        const listing = insertedListings[i % insertedListings.length];
         transactions.push({
+            listing_id: listing.id,
+            buyer_telegram_id: buyerId,
+            seller_telegram_id: sellerId,
             amount: listing.price,
-            buyer_telegram_id: buyer.telegram_id,
-            seller_telegram_id: listing.seller_telegram_id,
-            status: randElement(statuses),
-            listing_id: listing.id
+            status: statuses[i % statuses.length]
         });
     }
-
-    const { error: txnErr } = await supabase.from("transactions").insert(transactions);
-    if (txnErr) {
-        console.error("Error inserting transactions:", txnErr);
-    } else {
-        console.log(`Inserted ${transactions.length} transactions.`);
-    }
+    const { error: tError } = await supabase.from("transactions").insert(transactions);
+    if (tError) console.error("Transactions insert failed:", tError);
+    else console.log("Inserted 20 transactions.");
 
     // 3. Create Ads
+    console.log("Creating 10 ads...");
     const ads = [];
-    const adStatuses = ["active", "paused"];
     for (let i = 1; i <= 10; i++) {
-        const owner = randElement(users);
-        const status = randElement(adStatuses);
         ads.push({
             title: `Premium Sponsor Ad #${i}`,
-            description: `Shop the best deals in town with our sponsored brand #QA${i}`,
-            duration_days: randInt(1, 14),
-            stars_paid: randInt(50, 500),
-            owner_telegram_id: owner.telegram_id,
-            status: status,
-            expires_at: status === "active" ? new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString() : null,
-            link_url: "https://trustpay9ja.ng"
+            description: `Boost your visibility with Sponsor Ad #${i}. Featured across the marketplace.`,
+            link_url: "https://t.me/TrustPay9jaBot",
+            duration_days: randInt(7, 30),
+            status: (i % 3 === 0) ? "paused" : "active",
+            expires_at: new Date(Date.now() + 86400000 * randInt(1, 10)).toISOString(),
+            owner_telegram_id: sellerId,
+            stars_paid: randInt(10, 100)
         });
     }
-
-    const { error: adErr } = await supabase.from("ads").insert(ads);
-    if (adErr) {
-        console.error("Error inserting ads:", adErr);
-    } else {
-        console.log(`Inserted ${ads.length} ads.`);
-    }
+    const { error: aError } = await supabase.from("ads").insert(ads);
+    if (aError) console.error("Ads insert failed:", aError);
+    else console.log("Inserted 10 ads.");
 
     console.log("Seeding complete.");
 }

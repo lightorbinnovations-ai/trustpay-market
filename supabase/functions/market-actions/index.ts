@@ -36,12 +36,13 @@ serve(async (req) => {
 
     switch (action) {
       case "create_listing": {
-        const { title, description, price, category, condition, image_urls, is_negotiable } = payload;
+        const { title, description, price, category, condition, image_urls, is_negotiable, type, city, latitude, longitude, country } = payload;
 
         const { data, error } = await supabaseClient
           .from("listings")
           .insert({
             title, description, price, category, condition, image_urls, is_negotiable,
+            type: type || "item", city, latitude, longitude, country,
             seller_telegram_id: userId,
             status: "active"
           })
@@ -96,7 +97,10 @@ serve(async (req) => {
           .from("ads")
           .insert({
             owner_telegram_id: userId,
-            title, description, target_url, amount, duration_days,
+            title, description,
+            link_url: target_url,
+            stars_paid: amount,
+            duration_days,
             status: "pending_payment"
           })
           .select()
