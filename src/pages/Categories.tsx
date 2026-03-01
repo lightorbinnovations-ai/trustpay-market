@@ -5,6 +5,8 @@ import {
   Shirt, UtensilsCrossed, Heart, MoreHorizontal,
 } from "lucide-react";
 import { triggerHaptic } from "@/hooks/useTelegramUser";
+import { useActiveAds } from "@/hooks/useActiveAds";
+import AdCard from "@/components/AdCard";
 
 const categories = [
   { name: "Plumbing", icon: Wrench, gradient: "from-sky-400 to-blue-500" },
@@ -31,6 +33,7 @@ const card = {
 
 const Categories = () => {
   const navigate = useNavigate();
+  const { data: ads } = useActiveAds("categories", 1);
 
   return (
     <div className="px-5 pt-4">
@@ -68,6 +71,13 @@ const Categories = () => {
           );
         })}
       </motion.div>
+
+      {/* Sponsored Ad */}
+      {ads && ads.length > 0 && (
+        <div className="mt-6 grid grid-cols-2">
+          <AdCard ad={ads[0]} />
+        </div>
+      )}
     </div>
   );
 };

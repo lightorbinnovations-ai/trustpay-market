@@ -13,6 +13,8 @@ import { useFavorites } from "@/hooks/useFavorites";
 import SellerReviews from "@/components/SellerReviews";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { useVerifiedSeller } from "@/hooks/useVerifiedSeller";
+import { useActiveAds } from "@/hooks/useActiveAds";
+import AdCard from "@/components/AdCard";
 
 const container = {
   hidden: {},
@@ -32,6 +34,7 @@ const ListingDetails = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const { data: images } = useListingImages(id);
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { data: listingAds } = useActiveAds("listing-detail", 1);
 
   // Swipe gesture support
   const touchStartX = useRef(0);
@@ -243,8 +246,8 @@ const ListingDetails = () => {
             </span>
           )}
           <span className={`text-xs font-semibold px-3 py-1.5 rounded-full capitalize ${listing.status === "active" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
-              listing.status === "sold" ? "bg-accent text-accent-foreground" :
-                "bg-secondary text-muted-foreground"
+            listing.status === "sold" ? "bg-accent text-accent-foreground" :
+              "bg-secondary text-muted-foreground"
             }`}>{listing.status}</span>
         </motion.div>
 
@@ -277,6 +280,13 @@ const ListingDetails = () => {
         {/* Seller Reviews */}
         {listing.seller_telegram_id && (
           <SellerReviews sellerTelegramId={listing.seller_telegram_id} />
+        )}
+
+        {/* Sponsored Ad */}
+        {listingAds && listingAds.length > 0 && (
+          <div className="mt-5 grid grid-cols-2">
+            <AdCard ad={listingAds[0]} />
+          </div>
         )}
 
         {/* Action Buttons */}

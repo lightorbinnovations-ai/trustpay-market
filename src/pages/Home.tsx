@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronRight, MapPin, Loader2, Heart, Navigation } from "lucide-react";
@@ -30,7 +30,8 @@ const Home = () => {
   const navigate = useNavigate();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { location: userLocation } = useUserLocation();
-  const { data: homeAds } = useActiveAds("home", 2);
+  const { data: homeAds } = useActiveAds("home", 5);
+  const featuredScrollRef = useRef<HTMLDivElement>(null);
 
   const { data: featuredListings, isLoading: featuredLoading } = useQuery({
     queryKey: ["featured-listings"],
@@ -44,9 +45,9 @@ const Home = () => {
         .order("boosted_until", { ascending: false })
         .limit(6);
       if (boostedErr) throw boostedErr;
-      
+
       if (boosted && boosted.length > 0) return boosted;
-      
+
       const { data: recent, error: recentErr } = await supabase
         .from("listings")
         .select("*")
@@ -57,6 +58,25 @@ const Home = () => {
       return recent;
     },
   });
+
+  // Shuffle featured on every page load
+  const shuffledFeatured = useMemo(() => {
+    if (!featuredListings) return [];
+    return [...featuredListings].sort(() => Math.random() - 0.5);
+  }, [featuredListings]);
+
+  // Auto-scroll featured every 3 seconds
+  useEffect(() => {
+    const el = featuredScrollRef.current;
+    if (!el || !shuffledFeatured.length) return;
+    const CARD_WIDTH = 216; // 200px card + 16px gap
+    let current = 0;
+    const timer = setInterval(() => {
+      current = (current + 1) % shuffledFeatured.length;
+      el.scrollTo({ left: current * CARD_WIDTH, behavior: "smooth" });
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [shuffledFeatured]);
 
   const { data: recentListings, isLoading: recentLoading } = useQuery({
     queryKey: ["recent-listings"],
@@ -158,8 +178,8 @@ const Home = () => {
             <Loader2 className="w-5 h-5 text-primary animate-spin" />
           </div>
         ) : (
-          <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-none -mx-5 px-5">
-            {featuredListings?.map((item, idx) => {
+          <div ref={featuredScrollRef} className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-none -mx-5 px-5">
+            {shuffledFeatured.map((item, idx) => {
               const isVerified = verifiedSet?.has(item.seller_telegram_id);
               return (
                 <motion.div
@@ -194,10 +214,12 @@ const Home = () => {
         )}
       </motion.section>
 
-      {/* Sponsored Ad between sections */}
+      {/* Sponsored Ads — show up to 2 between sections */}
       {homeAds && homeAds.length > 0 && (
-        <div className="mt-6 grid grid-cols-2">
-          <AdCard ad={homeAds[0]} />
+        <div className="mt-6 flex flex-col gap-3">
+          {homeAds.slice(0, 2).map((ad, i) => (
+            <AdCard key={ad.id ?? i} ad={ad} />
+          ))}
         </div>
       )}
 
@@ -272,10 +294,12 @@ const Home = () => {
         )}
       </motion.section>
 
-      {/* Second ad after listings */}
-      {homeAds && homeAds.length > 1 && (
-        <div className="mt-6 grid grid-cols-2">
-          <AdCard ad={homeAds[1]} />
+      {/* Second ad slot after listings */}
+      {homeAds && homeAds.length > 2 && (
+        <div className="mt-6 flex flex-col gap-3">
+          {homeAds.slice(2, 4).map((ad, i) => (
+            <AdCard key={ad.id ?? i} ad={ad} />
+          ))}
         </div>
       )}
     </div>
