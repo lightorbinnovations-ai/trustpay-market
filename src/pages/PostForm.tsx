@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Camera, X, Loader2, MapPin } from "lucide-react";
 import { triggerHaptic, useTelegramUser } from "@/hooks/useTelegramUser";
-import { compressImage } from "@/lib/compressImage";
+import { compressImage } from "@/lib/media";
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -278,8 +278,8 @@ const PostForm = () => {
                 key={c}
                 onClick={() => { triggerHaptic("light"); setCategory(c); }}
                 className={`px-3.5 py-2 rounded-full text-xs font-semibold border transition-colors ${category === c
-                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                    : "bg-card text-foreground border-border/50"
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-card text-foreground border-border/50"
                   }`}
               >
                 {c}

@@ -1,9 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { validateTelegramWebAppData } from "../_shared/telegram-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "authorization, x-client-info, apikey, content-type, x-telegram-init-data",
 };
 
 const TELEGRAM_API = "https://api.telegram.org/bot";
@@ -17,22 +18,22 @@ Deno.serve(async (req) => {
   }
 
   const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
+  const initData = req.headers.get("x-telegram-init-data");
 
   try {
-    const { telegram_id } = await req.json();
-
-    if (!telegram_id) {
-      return new Response(
-        JSON.stringify({ error: "telegram_id required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!initData || !BOT_TOKEN) {
+      throw new Error("Missing authentication credentials");
     }
 
+    // 1. Verify Telegram Identity
+    const tgUser = validateTelegramWebAppData(initData, BOT_TOKEN);
+    const userId = tgUser.id;
+
     const invoicePayload = {
-      chat_id: telegram_id,
+      chat_id: userId,
       title: "Verified Seller Badge ✅",
       description: "Get a verified badge next to your name for 30 days. Build trust with buyers and stand out in the marketplace.",
-      payload: JSON.stringify({ type: "verified_badge", telegram_id }),
+      payload: JSON.stringify({ type: "verified_badge", telegram_id: userId }),
       provider_token: "",
       currency: "XTR",
       prices: [{ label: "30-day Verified Badge", amount: VERIFIED_STARS }],
@@ -58,11 +59,11 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, message: "Invoice sent to your Telegram chat" }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("verify-seller error:", err);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: err.message || "Internal server error" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

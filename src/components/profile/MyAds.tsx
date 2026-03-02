@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Trash2, Pause, Play, Star, ExternalLink, Plus, Edit2 } from "lucide-react";
+import { Loader2, Trash2, Pause, Play, Star, ExternalLink, Plus, Edit2, Eye, MousePointer2, BarChart3 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTelegramUser, triggerHaptic } from "@/hooks/useTelegramUser";
@@ -152,6 +152,29 @@ const MyAds = () => {
                     </span>
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1">{ad.duration_days} day{ad.duration_days > 1 ? "s" : ""}</p>
+
+                  {/* Analytics */}
+                  <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border/10">
+                    <div className="flex items-center gap-1">
+                      <Eye className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-[10px] font-bold text-foreground">{ad.views_count || 0}</span>
+                      <span className="text-[8px] text-muted-foreground uppercase">Views</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MousePointer2 className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-[10px] font-bold text-foreground">{ad.clicks_count || 0}</span>
+                      <span className="text-[8px] text-muted-foreground uppercase">Clicks</span>
+                    </div>
+                    {ad.views_count > 0 && (
+                      <div className="flex items-center gap-1 ml-auto">
+                        <BarChart3 className="w-3 h-3 text-primary" />
+                        <span className="text-[10px] font-bold text-primary">
+                          {((ad.clicks_count || 0) / ad.views_count * 100).toFixed(1)}%
+                        </span>
+                        <span className="text-[8px] text-primary/70 uppercase">CTR</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

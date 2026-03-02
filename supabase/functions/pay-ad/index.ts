@@ -1,9 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { validateTelegramWebAppData } from "../_shared/telegram-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "authorization, x-client-info, apikey, content-type, x-telegram-init-data",
 };
 
 const TELEGRAM_API = "https://api.telegram.org/bot";
@@ -20,27 +21,37 @@ Deno.serve(async (req) => {
   }
 
   const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
+  const initData = req.headers.get("x-telegram-init-data");
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
   try {
-    const { ad_id, telegram_id, days = 1 } = await req.json();
+    if (!initData || !BOT_TOKEN) {
+      throw new Error("Missing authentication credentials");
+    }
 
-    if (!ad_id || !telegram_id) {
+    // 1. Verify Telegram Identity
+    const tgUser = validateTelegramWebAppData(initData, BOT_TOKEN);
+    const userId = tgUser.id;
+
+    const { ad_id, days = 1 } = await req.json();
+
+    if (!ad_id) {
       return new Response(
-        JSON.stringify({ error: "ad_id and telegram_id required" }),
+        JSON.stringify({ error: "ad_id required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verify ad belongs to user
+    // 2. Verify ad belongs to the authenticated user
     const { data: ad, error: adErr } = await supabase
       .from("ads")
       .select("id, title, owner_telegram_id")
       .eq("id", ad_id)
-      .eq("owner_telegram_id", telegram_id)
+      .eq("owner_telegram_id", userId)
       .single();
 
     if (adErr || !ad) {
@@ -55,7 +66,7 @@ Deno.serve(async (req) => {
     const description = `Sponsored ad placement for ${days} day${days > 1 ? "s" : ""}. Your ad will appear inline on the Explore page.`;
 
     const invoicePayload = {
-      chat_id: telegram_id,
+      chat_id: userId,
       title,
       description,
       payload: JSON.stringify({ ad_id, days, type: "ad" }),
@@ -84,11 +95,11 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, message: "Invoice sent to your Telegram chat" }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("pay-ad error:", err);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: err.message || "Internal server error" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

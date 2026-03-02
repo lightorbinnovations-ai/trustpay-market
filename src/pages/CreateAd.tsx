@@ -5,7 +5,7 @@ import { Camera, Film, X, Loader2, Star } from "lucide-react";
 import { triggerHaptic, useTelegramUser } from "@/hooks/useTelegramUser";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { compressImage } from "@/lib/compressImage";
+import { compressImage, compressVideo } from "@/lib/media";
 import { calculateAdStars } from "@/lib/adPricing";
 import { Slider } from "@/components/ui/slider";
 
@@ -28,39 +28,56 @@ const CreateAd = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
-  const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [images, setImages] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
   const [video, setVideo] = useState<File | null>(null);
   const [videoName, setVideoName] = useState<string | null>(null);
   const [days, setDays] = useState(7);
   const [submitting, setSubmitting] = useState(false);
 
   const handleImageAdd = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files || []);
     e.target.value = "";
-    if (!file) return;
+    if (!files.length) return;
 
-    try {
-      const compressed = await compressImage(file);
-      setImage(compressed);
-      const reader = new FileReader();
-      reader.onload = (ev) => setImagePreview(ev.target?.result as string);
-      reader.onerror = () => toast({ title: "Could not load selected image", variant: "destructive" });
-      reader.readAsDataURL(compressed);
-    } catch {
-      toast({ title: "Could not process selected image", variant: "destructive" });
+    const remaining = 5 - images.length;
+    if (remaining <= 0) {
+      toast({ title: "Max 5 images allowed", variant: "destructive" });
+      return;
+    }
+
+    const toProcess = files.slice(0, remaining);
+
+    for (const file of toProcess) {
+      try {
+        const compressed = await compressImage(file);
+        setImages(prev => [...prev, compressed]);
+        setPreviews(prev => [...prev, URL.createObjectURL(compressed)]);
+      } catch (err) {
+        toast({ title: "Failed to process image", variant: "destructive" });
+      }
     }
   };
 
-  const handleVideoAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVideoAdd = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      toast({ title: "Video must be under 10MB", variant: "destructive" });
-      return;
+
+    try {
+      const compressed = await compressVideo(file);
+      setVideo(compressed);
+      setVideoName(compressed.name);
+    } catch (err) {
+      toast({ title: "Failed to process video", variant: "destructive" });
     }
-    setVideo(file);
-    setVideoName(file.name);
+  };
+
+  const removeImage = (idx: number) => {
+    setImages(prev => prev.filter((_, i) => i !== idx));
+    setPreviews(prev => {
+      URL.revokeObjectURL(prev[idx]);
+      return prev.filter((_, i) => i !== idx);
+    });
   };
 
   const handleSubmit = async () => {
@@ -107,16 +124,29 @@ const CreateAd = () => {
       const newAd = data?.ad;
       if (!newAd) throw new Error("Failed to receive ad data");
 
-      // Upload image
-      if (image) {
-        const ext = image.name.split(".").pop();
-        const path = `ads/${newAd.id}/image.${ext}`;
-        const { error: upErr } = await supabase.storage.from("listing-images").upload(path, image);
+      // Upload images
+      const imagePaths: string[] = [];
+      for (let i = 0; i < images.length; i++) {
+        const file = images[i];
+        const ext = file.name.split(".").pop();
+        const path = `ads/${newAd.id}/image_${i}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("listing-images").upload(path, file);
         if (upErr) throw upErr;
         const { data: urlData } = supabase.storage.from("listing-images").getPublicUrl(path);
+        imagePaths.push(urlData.publicUrl);
+      }
 
+      // Update ad with all image paths
+      if (imagePaths.length > 0) {
         await supabase.functions.invoke('market-actions', {
-          body: { action: 'update_ad_media', payload: { id: newAd.id, image_path: urlData.publicUrl } },
+          body: {
+            action: 'edit_ad',
+            payload: {
+              id: newAd.id,
+              image_paths: imagePaths,
+              image_path: imagePaths[0] // Primary image for backward compatibility
+            }
+          },
           headers: { 'x-telegram-init-data': initData }
         });
       }
@@ -130,7 +160,7 @@ const CreateAd = () => {
         const { data: urlData } = supabase.storage.from("listing-images").getPublicUrl(path);
 
         await supabase.functions.invoke('market-actions', {
-          body: { action: 'update_ad_media', payload: { id: newAd.id, video_path: urlData.publicUrl } },
+          body: { action: 'edit_ad', payload: { id: newAd.id, video_path: urlData.publicUrl } },
           headers: { 'x-telegram-init-data': initData }
         });
       }
@@ -164,30 +194,32 @@ const CreateAd = () => {
       <motion.div variants={container} initial="hidden" animate="show" className="flex flex-col gap-4 mt-6">
         {/* Image */}
         <motion.div variants={fadeUp}>
-          <label className="text-sm font-bold text-foreground mb-2 block">Ad Image</label>
-          <div className="flex gap-3">
-            {imagePreview ? (
-              <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-border/50">
-                <img src={imagePreview} alt="" className="w-full h-full object-cover" />
+          <label className="text-sm font-bold text-foreground mb-2 block">Ad Media (Up to 5 images + 1 video)</label>
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+            {previews.map((src, i) => (
+              <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border border-border/50 shrink-0">
+                <img src={src} alt="" className="w-full h-full object-cover" />
                 <button
-                  onClick={() => { setImage(null); setImagePreview(null); }}
+                  onClick={() => removeImage(i)}
                   className="absolute top-1 right-1 w-5 h-5 rounded-full bg-destructive/80 flex items-center justify-center"
                 >
                   <X className="w-3 h-3 text-destructive-foreground" />
                 </button>
               </div>
-            ) : (
+            ))}
+
+            {images.length < 5 && (
               <button
                 onClick={() => imageInputRef.current?.click()}
-                className="w-24 h-24 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground"
+                className="w-24 h-24 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground shrink-0"
               >
                 <Camera className="w-5 h-5" />
                 <span className="text-[10px] mt-1">Image</span>
               </button>
             )}
-            {/* Video */}
+
             {videoName ? (
-              <div className="relative flex items-center gap-2 px-3 py-2 rounded-xl border border-border/50 bg-card">
+              <div className="relative flex items-center shrink-0 h-24 gap-2 px-3 py-2 rounded-xl border border-border/50 bg-card">
                 <Film className="w-4 h-4 text-primary" />
                 <span className="text-xs text-foreground truncate max-w-[100px]">{videoName}</span>
                 <button
@@ -200,14 +232,14 @@ const CreateAd = () => {
             ) : (
               <button
                 onClick={() => videoInputRef.current?.click()}
-                className="w-24 h-24 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground"
+                className="w-24 h-24 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground shrink-0"
               >
                 <Film className="w-5 h-5" />
                 <span className="text-[10px] mt-1">Video</span>
               </button>
             )}
           </div>
-          <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageAdd} />
+          <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageAdd} />
           <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={handleVideoAdd} />
         </motion.div>
 

@@ -90,17 +90,20 @@ Deno.serve(async (req) => {
       }
 
       case "create_ad": {
-        const { title, description, target_url, amount, duration_days } = payload;
+        const { title, description, link_url, stars_paid, image_path, video_path, image_paths } = payload;
 
         const { data, error } = await supabaseClient
           .from("ads")
           .insert({
             owner_telegram_id: userId,
-            title, description,
-            link_url: target_url,
-            stars_paid: amount,
-            duration_days,
-            status: "pending_payment"
+            title,
+            description,
+            link_url,
+            stars_paid,
+            image_path,
+            video_path,
+            image_paths: image_paths || [],
+            status: "pending"
           })
           .select()
           .single();
@@ -139,20 +142,47 @@ Deno.serve(async (req) => {
       }
 
       case "edit_ad": {
-        const { id, title, description, target_url } = payload;
-        const { data: ad } = await supabaseClient.from("ads").select("owner_telegram_id").eq("id", id).single();
-        if (!ad || ad.owner_telegram_id !== userId) throw new Error("Unauthorized");
+        const { id, title, description, link_url, image_path, video_path, image_paths } = payload;
 
-        const { error } = await supabaseClient
+        // Authorization check
+        const { data: ad, error: fetchError } = await supabaseClient
+          .from("ads")
+          .select("owner_telegram_id")
+          .eq("id", id)
+          .single();
+
+        if (fetchError || !ad) throw new Error("Ad not found");
+        if (ad.owner_telegram_id !== userId) throw new Error("Unauthorized");
+
+        const { data, error } = await supabaseClient
           .from("ads")
           .update({
             title,
             description,
-            link_url: target_url
+            link_url,
+            image_path: image_path || null,
+            video_path: video_path || null,
+            image_paths: image_paths || []
           })
-          .eq("id", id);
+          .eq("id", id)
+          .select()
+          .single();
 
         if (error) throw error;
+        result = { success: true, ad: data };
+        break;
+      }
+
+      case "track_ad_view": {
+        const { id } = payload;
+        await supabaseClient.rpc('increment_ad_views', { ad_id: id });
+        result = { success: true };
+        break;
+      }
+
+      case "track_ad_click": {
+        const { id } = payload;
+        await supabaseClient.rpc('increment_ad_clicks', { ad_id: id });
         result = { success: true };
         break;
       }
