@@ -7,6 +7,8 @@ import { useVerifiedSeller } from "@/hooks/useVerifiedSeller";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
+import { translations, Language } from "@/lib/translations";
+import { Phone, Mail, Send } from "lucide-react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -40,9 +42,6 @@ const defaultSettings: Settings = {
 const languages = [
   { code: "en", label: "English", flag: "🇬🇧" },
   { code: "fr", label: "Français", flag: "🇫🇷" },
-  { code: "ha", label: "Hausa", flag: "🇳🇬" },
-  { code: "yo", label: "Yoruba", flag: "🇳🇬" },
-  { code: "ig", label: "Igbo", flag: "🇳🇬" },
 ];
 
 const faqItems = [
@@ -104,6 +103,7 @@ const SettingsPage = () => {
     setExpanded(null);
   };
 
+  const t = (translations[settings.language as Language] || translations.en).settings;
   const currentLang = languages.find((l) => l.code === settings.language) || languages[0];
 
   return (
@@ -118,7 +118,7 @@ const SettingsPage = () => {
             <Globe className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-foreground">Language</p>
+            <p className="text-sm font-bold text-foreground">{t.language}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{currentLang.flag} {currentLang.label}</p>
           </div>
           <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${expanded === "language" ? "rotate-180" : ""}`} />
@@ -159,8 +159,8 @@ const SettingsPage = () => {
             <Bell className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-foreground">Notifications</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Manage alert preferences</p>
+            <p className="text-sm font-bold text-foreground">{t.notifications.header}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{t.notifications.desc}</p>
           </div>
           <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${expanded === "notifications" ? "rotate-180" : ""}`} />
         </button>
@@ -174,10 +174,10 @@ const SettingsPage = () => {
             >
               <div className="mt-2 rounded-2xl bg-card border border-border/50 p-4 flex flex-col gap-4">
                 {([
-                  { key: "listing_views" as const, label: "Listing views", desc: "When someone views your listing" },
-                  { key: "favorites" as const, label: "Favorites", desc: "When someone saves your listing" },
-                  { key: "transactions" as const, label: "Transactions", desc: "Escrow payment updates" },
-                  { key: "nearby" as const, label: "Nearby listings", desc: "New listings in your area" },
+                  { key: "listing_views" as const, label: t.notifications.listing_views, desc: t.notifications.listing_views_desc },
+                  { key: "favorites" as const, label: t.notifications.favorites, desc: t.notifications.favorites_desc },
+                  { key: "transactions" as const, label: t.notifications.transactions, desc: t.notifications.transactions_desc },
+                  { key: "nearby" as const, label: t.notifications.nearby, desc: t.notifications.nearby_desc },
                 ]).map((item) => (
                   <div key={item.key} className="flex items-center justify-between">
                     <div>
@@ -193,6 +193,7 @@ const SettingsPage = () => {
         </AnimatePresence>
       </motion.div>
 
+
       {/* Verified Badge */}
       <motion.div variants={fadeUp}>
         <div className="p-4 rounded-2xl bg-card border border-border/50 shadow-sm">
@@ -201,18 +202,18 @@ const SettingsPage = () => {
               <BadgeCheck className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-foreground">Verified Seller Badge</p>
+              <p className="text-sm font-bold text-foreground">{t.verified.header}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {isVerified
-                  ? `Active until ${new Date(verifiedData!.expires_at).toLocaleDateString()}`
-                  : "Build trust with buyers"}
+                  ? `${t.verified.active_until} ${new Date(verifiedData!.expires_at).toLocaleDateString()}`
+                  : t.verified.desc}
               </p>
             </div>
           </div>
           {isVerified ? (
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/10">
               <BadgeCheck className="w-4 h-4 text-primary fill-primary/20" />
-              <span className="text-xs font-semibold text-primary">You're verified! ✅</span>
+              <span className="text-xs font-semibold text-primary">{t.verified.success}</span>
             </div>
           ) : (
             <motion.button
@@ -225,11 +226,12 @@ const SettingsPage = () => {
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  <Star className="w-4 h-4 fill-primary-foreground" /> Get Verified for 90 ⭐
+                  <Star className="w-4 h-4 fill-primary-foreground" /> {t.verified.get_verified}
                 </>
               )}
             </motion.button>
           )}
+
         </div>
       </motion.div>
 
@@ -243,8 +245,8 @@ const SettingsPage = () => {
             <Shield className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-foreground">Privacy & Security</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Your data & safety</p>
+            <p className="text-sm font-bold text-foreground">{t.privacy.header}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{t.privacy.desc}</p>
           </div>
           <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${expanded === "privacy" ? "rotate-180" : ""}`} />
         </button>
@@ -260,24 +262,24 @@ const SettingsPage = () => {
                 <div className="flex items-start gap-3">
                   <Shield className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Escrow Protection</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">All payments are held in escrow until delivery is confirmed. Your funds are always protected.</p>
+                    <p className="text-sm font-semibold text-foreground">{t.privacy.escrow}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t.privacy.escrow_desc}</p>
                   </div>
                 </div>
                 <div className="h-px bg-border/50" />
                 <div className="flex items-start gap-3">
                   <Shield className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Telegram Identity</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Your identity is verified through Telegram. We never store passwords — your Telegram account IS your login.</p>
+                    <p className="text-sm font-semibold text-foreground">{t.privacy.telegram}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t.privacy.telegram_desc}</p>
                   </div>
                 </div>
                 <div className="h-px bg-border/50" />
                 <div className="flex items-start gap-3">
                   <Shield className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Data Usage</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">We only collect your Telegram name, username, and location (if shared) to match you with nearby listings. We never share your data with third parties.</p>
+                    <p className="text-sm font-semibold text-foreground">{t.privacy.data}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t.privacy.data_desc}</p>
                   </div>
                 </div>
               </div>
@@ -296,8 +298,8 @@ const SettingsPage = () => {
             <HelpCircle className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-foreground">Help & Support</p>
-            <p className="text-xs text-muted-foreground mt-0.5">FAQ & contact</p>
+            <p className="text-sm font-bold text-foreground">{t.help.header}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{t.help.desc}</p>
           </div>
           <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${expanded === "help" ? "rotate-180" : ""}`} />
         </button>
@@ -333,23 +335,56 @@ const SettingsPage = () => {
                     </AnimatePresence>
                   </div>
                 ))}
-                <div className="p-4 bg-accent/30">
-                  <p className="text-xs text-muted-foreground">Need more help?</p>
-                  <button
-                    onClick={() => {
-                      const supportBot = import.meta.env.VITE_SUPPORT_BOT_USERNAME || "TrustPaySupport";
-                      window.open(`https://t.me/${supportBot}`, "_blank");
-                    }}
-                    className="mt-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
-                  >
-                    Contact Support
-                  </button>
+                <div className="p-4 bg-accent/30 space-y-4">
+                  <p className="text-xs text-muted-foreground">{t.help.need_help}</p>
+
+                  <div className="grid grid-cols-1 gap-2">
+                    <button
+                      onClick={() => { triggerHaptic("light"); window.open("https://t.me/lightorbinnovations", "_blank"); }}
+                      className="flex items-center gap-3 w-full p-3 rounded-xl bg-card border border-border/50 hover:bg-accent/50 transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Send className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs font-bold text-foreground">Telegram</p>
+                        <p className="text-[10px] text-muted-foreground">@lightorbinnovations</p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => { triggerHaptic("light"); window.open("tel:+2348025100844", "_blank"); }}
+                      className="flex items-center gap-3 w-full p-3 rounded-xl bg-card border border-border/50 hover:bg-accent/50 transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                        <Phone className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs font-bold text-foreground">Phone</p>
+                        <p className="text-[10px] text-muted-foreground">+234 802 510 0844</p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => { triggerHaptic("light"); window.open("mailto:lightorbinnovations@gmail.com", "_blank"); }}
+                      className="flex items-center gap-3 w-full p-3 rounded-xl bg-card border border-border/50 hover:bg-accent/50 transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                        <Mail className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs font-bold text-foreground">Email</p>
+                        <p className="text-[10px] text-muted-foreground">lightorbinnovations@gmail.com</p>
+                      </div>
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </motion.div>
+
 
       {/* App Info */}
       <motion.div variants={fadeUp} className="mt-4 text-center">

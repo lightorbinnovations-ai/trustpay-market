@@ -34,24 +34,36 @@ const Home = () => {
   const featuredScrollRef = useRef<HTMLDivElement>(null);
 
   const { data: featuredListings, isLoading: featuredLoading } = useQuery({
-    queryKey: ["featured-listings"],
+    queryKey: ["featured-listings", userLocation?.country?.code],
     queryFn: async () => {
-      const { data: boosted, error: boostedErr } = await supabase
+      let query = supabase
         .from("listings")
         .select("*")
         .eq("status", "active")
         .not("boosted_until", "is", null)
-        .gte("boosted_until", new Date().toISOString())
+        .gte("boosted_until", new Date().toISOString());
+
+      if (userLocation?.country?.code) {
+        query = query.eq("country", userLocation.country.code);
+      }
+
+      const { data: boosted, error: boostedErr } = await query
         .order("boosted_until", { ascending: false })
         .limit(6);
       if (boostedErr) throw boostedErr;
 
       if (boosted && boosted.length > 0) return boosted;
 
-      const { data: recent, error: recentErr } = await supabase
+      let recentQuery = supabase
         .from("listings")
         .select("*")
-        .eq("status", "active")
+        .eq("status", "active");
+
+      if (userLocation?.country?.code) {
+        recentQuery = recentQuery.eq("country", userLocation.country.code);
+      }
+
+      const { data: recent, error: recentErr } = await recentQuery
         .order("created_at", { ascending: false })
         .limit(6);
       if (recentErr) throw recentErr;
@@ -79,12 +91,18 @@ const Home = () => {
   }, [shuffledFeatured]);
 
   const { data: recentListings, isLoading: recentLoading } = useQuery({
-    queryKey: ["recent-listings"],
+    queryKey: ["recent-listings", userLocation?.country?.code],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("listings")
         .select("*")
-        .eq("status", "active")
+        .eq("status", "active");
+
+      if (userLocation?.country?.code) {
+        query = query.eq("country", userLocation.country.code);
+      }
+
+      const { data, error } = await query
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
