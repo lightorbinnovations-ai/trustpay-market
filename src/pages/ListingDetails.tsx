@@ -308,11 +308,16 @@ const ListingDetails = () => {
                 onClick={() => {
                   triggerHaptic("medium");
                   const username = seller?.username;
+                  const tg = (window as any).Telegram?.WebApp;
                   if (username) {
-                    window.open(`https://t.me/${username}`, "_blank");
+                    const link = `https://t.me/${username}`;
+                    if (tg?.openTelegramLink) tg.openTelegramLink(link);
+                    else window.open(link, "_blank");
                   } else {
                     // Fallback: open by user ID
-                    window.open(`tg://user?id=${listing.seller_telegram_id}`, "_blank");
+                    const link = `tg://user?id=${listing.seller_telegram_id}`;
+                    if (tg?.openTelegramLink) tg.openTelegramLink(link);
+                    else window.open(link, "_blank");
                   }
                 }}
                 className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-base shadow-lg shadow-primary/25"
