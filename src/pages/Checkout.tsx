@@ -165,16 +165,6 @@ const Checkout = () => {
         toast({ title: "Handoff failed", description: "Could not initiate escrow. Please try again.", variant: "destructive" });
         return;
       }
-
-      const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
-      const botLink = `https://t.me/${escrowBot}`;
-
-      if (window.Telegram?.WebApp?.openTelegramLink) {
-        window.Telegram.WebApp.openTelegramLink(botLink);
-      } else {
-        window.open(botLink, "_blank");
-      }
-      return null;
     },
     onSuccess: () => {
       triggerHaptic("heavy");
@@ -203,6 +193,38 @@ const Checkout = () => {
       <div className="flex flex-col items-center justify-center py-20 text-center px-5">
         <h2 className="text-lg font-bold text-foreground">Listing not found</h2>
         <button onClick={() => navigate("/home")} className="mt-4 text-primary font-semibold text-sm">Go Home</button>
+      </div>
+    );
+  }
+
+  if (startEscrow.isSuccess) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-5">
+        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center gap-4">
+          <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center">
+            <CheckCircle className="w-12 h-12 text-emerald-500" />
+          </div>
+          <h2 className="text-2xl font-bold text-foreground">Deal Sent!</h2>
+          <p className="text-muted-foreground text-sm max-w-[280px]">
+            We've sent the instructions to your Telegram chat. Please open the bot to confirm and pay.
+          </p>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              triggerHaptic("heavy");
+              const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
+              const botLink = `https://t.me/${escrowBot}`;
+              if (window.Telegram?.WebApp?.openTelegramLink) {
+                window.Telegram.WebApp.openTelegramLink(botLink);
+              } else {
+                window.open(botLink, "_blank");
+              }
+            }}
+            className="mt-6 flex items-center justify-center gap-2 w-full min-w-[260px] py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/25"
+          >
+            <Shield className="w-5 h-5" /> Open Escrow Bot
+          </motion.button>
+        </motion.div>
       </div>
     );
   }
