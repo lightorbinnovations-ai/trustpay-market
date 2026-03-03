@@ -149,38 +149,22 @@ const Checkout = () => {
         listing.price || 0
       );
 
-      // 4. Generate and save short-lived token for redirection
-      const token = generateToken(12);
-      const { error: tokenError } = await supabase.from('escrow_tokens').insert({
-        token,
-        listing_id: listing.id,
-        buyer_id: user.id,
-        expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString()
-      });
+      // 4. Redirect to Telegram bot with pre-filled command
+      // Format: nd_BASE64(@seller amount description|listingId)
+      const sellerName = seller?.username || listing.seller_telegram_id;
+      const payload = `@${sellerName} ${listing.price} ${listing.title}|${listing.id}`;
+      const encodedPayload = btoa(payload).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 
-      if (tokenError) {
-        console.error("Token generation failed:", tokenError);
-        // We continue anyway, as fallback to deep link is possible if needed, 
-        // but for now we'll just return null if it fails
-        return null;
-      }
+      const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
+      const botLink = `https://t.me/${escrowBot}?start=nd_${encodedPayload}`;
 
-      return token;
+      window.open(botLink, "_blank");
+      return null;
     },
-    onSuccess: (token) => {
+    onSuccess: () => {
       triggerHaptic("heavy");
       queryClient.invalidateQueries({ queryKey: ["checkout-tx"] });
-      toast({ title: "Escrow started ✅", description: "Redirecting to escrow bot..." });
-
-      // Redirect to internal escrow-start page with token
-      if (token) {
-        navigate(`/escrow-start?token=${token}`);
-      } else {
-        // Fallback to direct bot link if token failed (should not happen normally)
-        const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
-        const deepLink = `https://t.me/${escrowBot}?startapp=escrow_${listing!.id}`;
-        window.open(deepLink, "_blank");
-      }
+      toast({ title: "Redirecting...", description: "Opening Telegram bot..." });
     },
     onError: (err: any) => {
       toast({ title: "Failed", description: err.message, variant: "destructive" });
