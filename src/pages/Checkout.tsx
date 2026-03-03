@@ -153,6 +153,7 @@ const Checkout = () => {
       // Format: nd_BASE64(@seller amount description|listingId)
       const sellerName = seller?.username || listing.seller_telegram_id;
       const payload = `@${sellerName} ${listing.price} ${listing.title}|${listing.id}`;
+      // Use URL-safe Base64 encoding
       const encodedPayload = btoa(payload).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 
       const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
