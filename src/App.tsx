@@ -24,6 +24,7 @@ import CreateAd from "./pages/CreateAd";
 import EditAd from "./pages/EditAd";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
+import EscrowStart from "./pages/EscrowStart";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => {
               <Route path="/edit-ad/:id" element={<EditAd />} />
               <Route path="/admin" element={<AdminDashboard />} />
             </Route>
+            <Route path="/escrow-start" element={<EscrowStart />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -171,14 +171,16 @@ const Checkout = () => {
       triggerHaptic("heavy");
       queryClient.invalidateQueries({ queryKey: ["checkout-tx"] });
       toast({ title: "Escrow started ✅", description: "Redirecting to escrow bot..." });
-      const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
 
-      // Use token-based URL if token was generated, fallback to old start_param if not
-      const deepLink = token
-        ? `https://t.me/${escrowBot}/app?token=${token}`
-        : `https://t.me/${escrowBot}?startapp=escrow_${listing!.id}`;
-
-      window.open(deepLink, "_blank");
+      // Redirect to internal escrow-start page with token
+      if (token) {
+        navigate(`/escrow-start?token=${token}`);
+      } else {
+        // Fallback to direct bot link if token failed (should not happen normally)
+        const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
+        const deepLink = `https://t.me/${escrowBot}?startapp=escrow_${listing!.id}`;
+        window.open(deepLink, "_blank");
+      }
     },
     onError: (err: any) => {
       toast({ title: "Failed", description: err.message, variant: "destructive" });
