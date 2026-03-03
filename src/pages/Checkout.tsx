@@ -169,7 +169,11 @@ const Checkout = () => {
       const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
       const botLink = `https://t.me/${escrowBot}?start=tok_${handoffToken}`;
 
-      window.open(botLink, "_blank");
+      if (window.Telegram?.WebApp?.openTelegramLink) {
+        window.Telegram.WebApp.openTelegramLink(botLink);
+      } else {
+        window.open(botLink, "_blank");
+      }
       return null;
     },
     onSuccess: () => {
