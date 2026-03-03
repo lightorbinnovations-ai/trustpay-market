@@ -149,15 +149,25 @@ const Checkout = () => {
         listing.price || 0
       );
 
-      // 4. Redirect to Telegram bot with pre-filled command
-      // Format: nd_BASE64(@seller amount description|listingId)
-      const sellerName = seller?.username || listing.seller_telegram_id;
-      const payload = `@${sellerName} ${listing.price} ${listing.title}|${listing.id}`;
-      // Use URL-safe Base64 encoding
-      const encodedPayload = btoa(payload).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+      // 4. Create a short-lived token for the handoff
+      const handoffToken = generateToken(10);
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
+
+      const { error: tokenError } = await supabase.from("escrow_tokens").insert({
+        token: handoffToken,
+        listing_id: listing.id,
+        buyer_id: user.id,
+        expires_at: expiresAt
+      });
+
+      if (tokenError) {
+        console.error("Failed to create handoff token:", tokenError);
+        toast({ title: "Handoff failed", description: "Could not initiate escrow. Please try again.", variant: "destructive" });
+        return;
+      }
 
       const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
-      const botLink = `https://t.me/${escrowBot}?start=nd_${encodedPayload}`;
+      const botLink = `https://t.me/${escrowBot}?start=tok_${handoffToken}`;
 
       window.open(botLink, "_blank");
       return null;
