@@ -163,8 +163,9 @@ const Checkout = () => {
       if (tokenError) {
         console.error("Failed to create handoff token:", tokenError);
         toast({ title: "Handoff failed", description: "Could not initiate escrow. Please try again.", variant: "destructive" });
-        return;
+        return null;
       }
+      return handoffToken;
     },
     onSuccess: () => {
       triggerHaptic("heavy");
@@ -213,7 +214,8 @@ const Checkout = () => {
             onClick={() => {
               triggerHaptic("heavy");
               const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
-              const botLink = `https://t.me/${escrowBot}`;
+              const tokenInfo = startEscrow.data ? `?start=tok_${startEscrow.data}` : "";
+              const botLink = `https://t.me/${escrowBot}${tokenInfo}`;
               if (window.Telegram?.WebApp?.openTelegramLink) {
                 window.Telegram.WebApp.openTelegramLink(botLink);
               } else {
