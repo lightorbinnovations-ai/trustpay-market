@@ -29,6 +29,11 @@ const statusConfig: Record<string, { icon: typeof Clock; label: string; color: s
   refunded: { icon: DollarSign, label: "Refunded", color: "text-muted-foreground", desc: "Payment has been refunded." },
 };
 
+const generateToken = (length = 12) => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join("");
+};
+
 const Checkout = () => {
   const { listingId } = useParams<{ listingId: string }>();
   const navigate = useNavigate();
@@ -143,13 +148,36 @@ const Checkout = () => {
         user.id,
         listing.price || 0
       );
+
+      // 4. Generate and save short-lived token for redirection
+      const token = generateToken(12);
+      const { error: tokenError } = await supabase.from('escrow_tokens').insert({
+        token,
+        listing_id: listing.id,
+        buyer_id: user.id,
+        expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString()
+      });
+
+      if (tokenError) {
+        console.error("Token generation failed:", tokenError);
+        // We continue anyway, as fallback to deep link is possible if needed, 
+        // but for now we'll just return null if it fails
+        return null;
+      }
+
+      return token;
     },
-    onSuccess: () => {
+    onSuccess: (token) => {
       triggerHaptic("heavy");
       queryClient.invalidateQueries({ queryKey: ["checkout-tx"] });
       toast({ title: "Escrow started ✅", description: "Redirecting to escrow bot..." });
       const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
-      const deepLink = `https://t.me/${escrowBot}?startapp=escrow_${listing!.id}`;
+
+      // Use token-based URL if token was generated, fallback to old start_param if not
+      const deepLink = token
+        ? `https://t.me/${escrowBot}/app?token=${token}`
+        : `https://t.me/${escrowBot}?startapp=escrow_${listing!.id}`;
+
       window.open(deepLink, "_blank");
     },
     onError: (err: any) => {
