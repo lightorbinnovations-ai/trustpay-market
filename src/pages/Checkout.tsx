@@ -167,7 +167,7 @@ const Checkout = () => {
       }
 
       const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
-      const botLink = `https://t.me/${escrowBot}?start=tok_${handoffToken}`;
+      const botLink = `https://t.me/${escrowBot}`;
 
       if (window.Telegram?.WebApp?.openTelegramLink) {
         window.Telegram.WebApp.openTelegramLink(botLink);
@@ -179,7 +179,11 @@ const Checkout = () => {
     onSuccess: () => {
       triggerHaptic("heavy");
       queryClient.invalidateQueries({ queryKey: ["checkout-tx"] });
-      toast({ title: "Redirecting...", description: "Opening Telegram bot..." });
+      toast({
+        title: "🛡️ Deal Initiated!",
+        description: "Check your Telegram chat for the details.",
+        duration: 5000
+      });
     },
     onError: (err: any) => {
       toast({ title: "Failed", description: err.message, variant: "destructive" });
@@ -329,8 +333,13 @@ const Checkout = () => {
                   if (txStatus === "pending") {
                     // Already have a pending tx, just open the bot
                     const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
-                    const deepLink = `https://t.me/${escrowBot}?startapp=escrow_${listing.id}`;
-                    window.open(deepLink, "_blank");
+                    const deepLink = `https://t.me/${escrowBot}?start=escrow_${listing.id}`;
+
+                    if (window.Telegram?.WebApp?.openTelegramLink) {
+                      window.Telegram.WebApp.openTelegramLink(deepLink);
+                    } else {
+                      window.open(deepLink, "_blank");
+                    }
                   } else {
                     startEscrow.mutate();
                   }
