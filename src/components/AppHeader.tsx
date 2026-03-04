@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Bell, X, List, Receipt, Settings, Heart, BarChart3, ShieldCheck, ChevronRight, AlertTriangle, Bot, Megaphone } from "lucide-react";
+import { Search, Bell, X, List, Receipt, Settings, Heart, BarChart3, ShieldCheck, ChevronRight, AlertTriangle, Bot, Megaphone, ArrowLeft } from "lucide-react";
 import { useTelegramUser, triggerHaptic } from "@/hooks/useTelegramUser";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -29,6 +29,7 @@ const AppHeader = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const location = useLocation();
   const { unreadCount } = useNotifications();
   const initials = isGuest ? "?" : user.first_name.charAt(0).toUpperCase();
 
@@ -54,28 +55,57 @@ const AppHeader = () => {
     navigate(path);
   };
 
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path === "/notifications") return "Notifications";
+    if (path === "/favorites") return "Favorites";
+    if (path === "/profile") return "My Profile";
+    if (path === "/admin") return "Admin Panel";
+    if (path === "/categories") return "Categories";
+    if (path.startsWith("/category/")) return decodeURIComponent(path.split("/").pop() || "");
+    if (path.startsWith("/profile/")) return "Profile";
+    if (path === "/explore") return "Explore";
+    if (path.startsWith("/post")) return "Create Post";
+    if (path.startsWith("/edit-listing")) return "Edit Listing";
+    if (path.startsWith("/checkout")) return "Checkout";
+    return "";
+  };
+
   return (
     <>
       <div className="fixed top-0 left-0 right-0 z-50 flex justify-center">
         <div className="w-full max-w-[480px] bg-card/90 backdrop-blur-xl border-b border-border/50 shadow-sm">
-          <div className="flex items-center justify-between px-5 py-3 pt-[calc(env(safe-area-inset-top)+12px)]">
-            {/* Avatar — opens sidebar */}
-            <button
-              onClick={() => { triggerHaptic("light"); setSheetOpen(true); }}
-              className={`w-9 h-9 rounded-full flex items-center justify-center shadow-sm overflow-hidden ${isGuest
+          <div className="flex items-center gap-3 px-5 py-3 pt-[calc(env(safe-area-inset-top)+12px)]">
+            {/* Back Button or Avatar */}
+            {location.pathname !== "/home" && location.pathname !== "/" ? (
+              <button
+                onClick={() => { triggerHaptic("light"); navigate(-1); }}
+                className="w-9 h-9 rounded-full bg-card border border-border/50 flex items-center justify-center shadow-sm shrink-0"
+              >
+                <ArrowLeft className="w-5 h-5 text-foreground" />
+              </button>
+            ) : (
+              <button
+                onClick={() => { triggerHaptic("light"); setSheetOpen(true); }}
+                className={`w-9 h-9 rounded-full flex items-center justify-center shadow-sm overflow-hidden shrink-0 ${isGuest
                   ? "bg-destructive/20 border-2 border-destructive/40"
                   : "bg-gradient-to-br from-primary to-primary/60"
-                }`}
-            >
-              {!isGuest && user.photo_url ? (
-                <img src={user.photo_url} alt={user.first_name} className="w-full h-full object-cover" />
-              ) : (
-                <span className={`text-sm font-bold ${isGuest ? "text-destructive" : "text-primary-foreground"}`}>{initials}</span>
-              )}
-            </button>
+                  }`}
+              >
+                {!isGuest && user.photo_url ? (
+                  <img src={user.photo_url} alt={user.first_name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className={`text-sm font-bold ${isGuest ? "text-destructive" : "text-primary-foreground"}`}>{initials}</span>
+                )}
+              </button>
+            )}
+
+            <h2 className="text-[16px] font-bold flex-1 text-center truncate">
+              {getPageTitle()}
+            </h2>
 
             {/* Search + Notification */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => { triggerHaptic("light"); setSearchOpen(!searchOpen); }}
                 className="w-9 h-9 rounded-full bg-card border border-border/50 flex items-center justify-center shadow-sm"
@@ -139,8 +169,8 @@ const AppHeader = () => {
           {/* User info */}
           <div className="flex items-center gap-3 px-5 pt-8 pb-5 border-b border-border/50">
             <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm overflow-hidden shrink-0 ${isGuest
-                ? "bg-destructive/20 border-2 border-destructive/40"
-                : "bg-gradient-to-br from-primary to-primary/60"
+              ? "bg-destructive/20 border-2 border-destructive/40"
+              : "bg-gradient-to-br from-primary to-primary/60"
               }`}>
               {!isGuest && user.photo_url ? (
                 <img src={user.photo_url} alt={user.first_name} className="w-full h-full object-cover" />

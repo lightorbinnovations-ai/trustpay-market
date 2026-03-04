@@ -60,10 +60,19 @@ const AdminDashboard = () => {
 
   return (
     <div className="px-5 pt-4 pb-8">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-extrabold text-foreground">Admin Panel</h1>
-        <p className="text-muted-foreground text-sm mt-1">Manage your marketplace</p>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3">
+        <button
+          onClick={() => { triggerHaptic("light"); navigate(-1); }}
+          className="w-9 h-9 rounded-full bg-card border border-border/50 flex items-center justify-center shadow-sm shrink-0"
+        >
+          <ArrowLeft className="w-5 h-5 text-foreground" />
+        </button>
+        <div>
+          <h1 className="text-2xl font-extrabold text-foreground">Admin Panel</h1>
+          <p className="text-muted-foreground text-sm mt-1">Manage your marketplace</p>
+        </div>
       </motion.div>
+
 
       <div className="flex gap-2 mt-5 overflow-x-auto scrollbar-none -mx-5 px-5 pb-1">
         {tabs.map((t) => {

@@ -179,7 +179,7 @@ const ListingDetails = () => {
             onClick={() => { triggerHaptic("light"); navigate(-1); }}
             className="w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center shadow-sm"
           >
-            <ChevronLeft className="w-5 h-5 text-foreground" />
+            <ArrowLeft className="w-5 h-5 text-foreground" />
           </motion.button>
           <div className="flex gap-2">
             <motion.button

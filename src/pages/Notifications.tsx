@@ -45,16 +45,34 @@ const Notifications = () => {
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between mb-6"
       >
-        <h1 className="text-xl font-extrabold text-foreground">Notifications</h1>
-        {unreadCount > 0 && (
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => { triggerHaptic("light"); markAllRead.mutate(); }}
-            className="flex items-center gap-1 text-xs font-semibold text-primary"
+            onClick={() => { triggerHaptic("light"); navigate(-1); }}
+            className="w-9 h-9 rounded-full bg-card border border-border/50 flex items-center justify-center shadow-sm shrink-0"
           >
-            <Check className="w-3.5 h-3.5" /> Mark all read
+            <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
-        )}
+          <h1 className="text-xl font-extrabold text-foreground">Notifications</h1>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {unreadCount > 0 && (
+            <button
+              onClick={() => { triggerHaptic("light"); markAllRead.mutate(); }}
+              className="text-xs font-semibold text-primary px-3 py-1.5 rounded-lg bg-primary/10"
+            >
+              Mark all read
+            </button>
+          )}
+          <button
+            onClick={() => { triggerHaptic("light"); navigate(-1); }}
+            className="w-9 h-9 rounded-full bg-card border border-border/50 flex items-center justify-center shadow-sm shrink-0"
+          >
+            <X className="w-5 h-5 text-foreground" />
+          </button>
+        </div>
       </motion.div>
+
 
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
@@ -81,28 +99,25 @@ const Notifications = () => {
                   if (!notif.is_read) markAsRead.mutate(notif.id);
                   if (notif.listing_id) navigate(`/listing/${notif.listing_id}`);
                 }}
-                className={`flex items-start gap-3 p-4 rounded-2xl border shadow-sm cursor-pointer transition-colors ${
-                  notif.is_read
+                className={`flex items-start gap-3 p-4 rounded-2xl border shadow-sm cursor-pointer transition-colors ${notif.is_read
                     ? "bg-card border-border/50"
                     : "bg-accent/30 border-primary/20"
-                }`}
+                  }`}
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                  notif.type === "transaction_started" ? "bg-primary/10"
-                  : notif.type === "favorite_added" ? "bg-destructive/10"
-                  : notif.type === "welcome" ? "bg-amber-500/10"
-                  : notif.type === "new_listing_nearby" ? "bg-emerald-500/10"
-                  : notif.type === "boost_activated" ? "bg-primary/10"
-                  : "bg-accent"
-                }`}>
-                  <Icon className={`w-5 h-5 ${
-                    notif.type === "transaction_started" ? "text-primary" 
-                    : notif.type === "favorite_added" ? "text-destructive"
-                    : notif.type === "welcome" ? "text-amber-500"
-                    : notif.type === "new_listing_nearby" ? "text-emerald-500"
-                    : notif.type === "boost_activated" ? "text-primary"
-                    : "text-muted-foreground"
-                  }`} />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${notif.type === "transaction_started" ? "bg-primary/10"
+                    : notif.type === "favorite_added" ? "bg-destructive/10"
+                      : notif.type === "welcome" ? "bg-amber-500/10"
+                        : notif.type === "new_listing_nearby" ? "bg-emerald-500/10"
+                          : notif.type === "boost_activated" ? "bg-primary/10"
+                            : "bg-accent"
+                  }`}>
+                  <Icon className={`w-5 h-5 ${notif.type === "transaction_started" ? "text-primary"
+                      : notif.type === "favorite_added" ? "text-destructive"
+                        : notif.type === "welcome" ? "text-amber-500"
+                          : notif.type === "new_listing_nearby" ? "text-emerald-500"
+                            : notif.type === "boost_activated" ? "text-primary"
+                              : "text-muted-foreground"
+                    }`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
