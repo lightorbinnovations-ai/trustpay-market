@@ -203,6 +203,19 @@ Deno.serve(async (req) => {
         break;
       }
 
+      case "update_transaction_status": {
+        const { id, status } = payload;
+
+        // Ensure ownership
+        const { data: tx } = await supabaseClient.from("transactions").select("buyer_telegram_id").eq("id", id).single();
+        if (!tx || tx.buyer_telegram_id !== userId) throw new Error("Unauthorized");
+
+        const { error } = await supabaseClient.from("transactions").update({ status }).eq("id", id);
+        if (error) throw error;
+        result = { success: true };
+        break;
+      }
+
       case "toggle_favorite": {
         const { listing_id } = payload;
 

@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, XCircle, Info, User, DollarSign, Clock, Loader2, CheckCircle, AlertTriangle, Package } from "lucide-react";
+import { Shield, XCircle, Info, User, DollarSign, Clock, Loader2, CheckCircle, AlertTriangle, Package, Copy, ExternalLink, ChevronRight } from "lucide-react";
 import { useTelegramUser, triggerHaptic } from "@/hooks/useTelegramUser";
 import { formatNaira } from "@/lib/currency";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -123,7 +123,7 @@ const Checkout = () => {
         listing_id: listing.id,
         seller_telegram_id: listing.seller_telegram_id,
         amount: listing.price || 0,
-        type: 'escrow', // Explicitly marking type usually required depending on DB, but original didn't
+        type: 'escrow',
         status: "pending",
       };
 
@@ -149,36 +149,40 @@ const Checkout = () => {
         listing.price || 0
       );
 
-      // 4. Create a short-lived token for the handoff
-      const handoffToken = generateToken(10);
-      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
-
-      const { error: tokenError } = await supabase.from("escrow_tokens").insert({
-        token: handoffToken,
-        listing_id: listing.id,
-        buyer_id: user.id,
-        expires_at: expiresAt
-      });
-
-      if (tokenError) {
-        console.error("Failed to create handoff token:", tokenError);
-        toast({ title: "Handoff failed", description: "Could not initiate escrow. Please try again.", variant: "destructive" });
-        return null;
-      }
-      return handoffToken;
+      return data.transaction;
     },
-    onSuccess: () => {
+    onSuccess: (tx) => {
       triggerHaptic("heavy");
       queryClient.invalidateQueries({ queryKey: ["checkout-tx"] });
       toast({
-        title: "🛡️ Deal Initiated!",
-        description: "Check your Telegram chat for the details.",
+        title: "🛡️ Escrow Initiated!",
+        description: "Follow the steps below to complete payment.",
         duration: 5000
       });
     },
     onError: (err: any) => {
       toast({ title: "Failed", description: err.message, variant: "destructive" });
     },
+  });
+
+  const updateStatus = useMutation({
+    mutationFn: async (status: string) => {
+      if (!existingTx) return;
+      const initData = window.Telegram?.WebApp?.initData;
+      const { data, error } = await supabase.functions.invoke('market-actions', {
+        body: {
+          action: 'update_transaction_status',
+          payload: { id: existingTx.id, status }
+        },
+        headers: { 'x-telegram-init-data': initData }
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["checkout-tx"] });
+      triggerHaptic("medium");
+    }
   });
 
   if (isLoading) {
@@ -198,35 +202,117 @@ const Checkout = () => {
     );
   }
 
-  if (startEscrow.isSuccess) {
+  if (startEscrow.isSuccess || (existingTx && txStatus === "pending")) {
+    const sName = seller?.username ? `@${seller.username}` : seller?.first_name || "Seller";
+    const amount = listing.price || 0;
+
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-5">
-        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center gap-4">
-          <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center">
-            <CheckCircle className="w-12 h-12 text-emerald-500" />
-          </div>
-          <h2 className="text-2xl font-bold text-foreground">Deal Sent!</h2>
-          <p className="text-muted-foreground text-sm max-w-[280px]">
-            We've sent the instructions to your Telegram chat. Please open the bot to confirm and pay.
-          </p>
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => {
-              triggerHaptic("heavy");
-              const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
-              const tokenInfo = startEscrow.data ? `?start=tok_${startEscrow.data}` : "";
-              const botLink = `https://t.me/${escrowBot}${tokenInfo}`;
-              if (window.Telegram?.WebApp?.openTelegramLink) {
-                window.Telegram.WebApp.openTelegramLink(botLink);
-              } else {
-                window.open(botLink, "_blank");
-              }
-            }}
-            className="mt-6 flex items-center justify-center gap-2 w-full min-w-[260px] py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/25"
+      <div className="flex flex-col min-h-[90vh] pb-10">
+        <div className="flex flex-col items-center justify-center p-8 text-center">
+          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center gap-4">
+            <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center">
+              <Shield className="w-8 h-8 text-emerald-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground">Next Steps</h2>
+            <p className="text-muted-foreground text-sm max-w-[300px]">
+              Follow these simple steps to complete your secure payment in the Escrow Bot.
+            </p>
+          </motion.div>
+        </div>
+
+        <div className="px-5 space-y-4">
+          {/* Step 1: Info */}
+          <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="bg-card border border-border rounded-2xl p-4 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-primary text-xs font-bold">1</div>
+              <p className="font-semibold text-sm italic">Copy the details below</p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-xl">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Seller username</p>
+                  <p className="font-mono text-sm">{sName}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(sName);
+                    toast({ title: "Copied!", duration: 1000 });
+                  }}
+                  className="p-2 hover:bg-secondary rounded-lg transition-colors"
+                >
+                  <Copy className="w-4 h-4 text-primary" />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-xl">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Amount to Pay</p>
+                  <p className="font-mono text-sm font-bold">{formatNaira(amount)}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(amount.toString());
+                    toast({ title: "Copied!", duration: 1000 });
+                  }}
+                  className="p-2 hover:bg-secondary rounded-lg transition-colors"
+                >
+                  <Copy className="w-4 h-4 text-primary" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Step 2: Open Bot */}
+          <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="bg-card border border-border rounded-2xl p-4 shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-primary text-xs font-bold">2</div>
+              <p className="font-semibold text-sm italic">Create the deal in Escrow Bot</p>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">Open the Escrow Bot and use "New Deal" with the details above.</p>
+
+            <button
+              onClick={() => {
+                triggerHaptic("light");
+                const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
+                const botLink = `https://t.me/${escrowBot}`;
+                if (window.Telegram?.WebApp?.openTelegramLink) {
+                  window.Telegram.WebApp.openTelegramLink(botLink);
+                } else {
+                  window.open(botLink, "_blank");
+                }
+              }}
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm"
+            >
+              Open Escrow Bot <ExternalLink className="w-4 h-4" />
+            </button>
+          </motion.div>
+
+          {/* Step 3: Complete */}
+          <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.4 }} className="bg-card border border-border rounded-2xl p-4 shadow-sm border-emerald-500/20 bg-emerald-500/5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-6 h-6 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 text-xs font-bold">3</div>
+              <p className="font-semibold text-sm">Once payment is released...</p>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">Click below only AFTER you have confirmed delivery and released funds in the Escrow Bot.</p>
+
+            <button
+              disabled={updateStatus.isPending}
+              onClick={() => updateStatus.mutate("released")}
+              className="flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+            >
+              {updateStatus.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+              Complete Transaction in Market
+            </button>
+          </motion.div>
+
+          <button
+            onClick={() => navigate("/home")}
+            className="flex items-center justify-center gap-2 w-full py-3 text-muted-foreground text-sm font-medium hover:text-foreground"
           >
-            <Shield className="w-5 h-5" /> Open Escrow Bot
-          </motion.button>
-        </motion.div>
+            Go Back Home
+          </button>
+        </div>
       </div>
     );
   }
@@ -399,13 +485,20 @@ const Checkout = () => {
               <Package className="w-5 h-5" /> Open Escrow Bot
             </motion.button>
           ) : txStatus === "released" ? (
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              onClick={() => { triggerHaptic("light"); navigate("/profile/transactions"); }}
-              className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-base shadow-lg shadow-primary/25"
-            >
-              <CheckCircle className="w-5 h-5" /> View Transaction History
-            </motion.button>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center gap-4 p-6 bg-emerald-500/5 rounded-3xl border border-emerald-500/20">
+              <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-8 h-8 text-emerald-500" />
+              </div>
+              <h3 className="text-xl font-bold">Sale Successful!</h3>
+              <p className="text-sm text-muted-foreground text-center">This transaction has been successfully recorded in the dashboard.</p>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => { triggerHaptic("light"); navigate("/home"); }}
+                className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-emerald-500 text-white font-semibold text-base shadow-lg shadow-emerald-500/25"
+              >
+                Return to Shop
+              </motion.button>
+            </motion.div>
           ) : (
             <motion.button
               whileTap={{ scale: 0.97 }}
