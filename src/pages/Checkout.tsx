@@ -292,17 +292,18 @@ const Checkout = () => {
           <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.4 }} className="bg-card border border-border rounded-2xl p-4 shadow-sm border-emerald-500/20 bg-emerald-500/5">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-6 h-6 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 text-xs font-bold">3</div>
-              <p className="font-semibold text-sm">Once payment is released...</p>
+              <p className="font-semibold text-sm">Automatic Confirmation</p>
             </div>
-            <p className="text-xs text-muted-foreground mb-4">Click below only AFTER you have confirmed delivery and released funds in the Escrow Bot.</p>
+            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+              Once you confirm delivery in the Escrow Bot, this page will <b>automatically update</b> to the success screen.
+            </p>
 
             <button
-              disabled={updateStatus.isPending}
-              onClick={() => updateStatus.mutate("released")}
-              className="flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+              disabled={true}
+              className="flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20 cursor-default opacity-80"
             >
-              {updateStatus.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-              Complete Transaction in Market
+              <Clock className="w-4 h-4 animate-pulse" />
+              Waiting for Escrow Release...
             </button>
           </motion.div>
 
