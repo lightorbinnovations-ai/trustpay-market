@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Users, Package, DollarSign, BarChart3, Trash2, Ban, CheckCircle, Loader2, Search, Eye, Rocket, Star, TrendingUp, Clock, AlertTriangle, Megaphone, BadgeCheck, Pause, Play } from "lucide-react";
+import { Users, Package, DollarSign, BarChart3, Trash2, Ban, CheckCircle, Loader2, Search, Eye, Rocket, Star, TrendingUp, Clock, AlertTriangle, Megaphone, BadgeCheck, Pause, Play, ArrowLeft } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatNaira } from "@/lib/currency";

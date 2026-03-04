@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Tag, User, MessageCircle, Shield, Share2, Loader2, ChevronLeft, ChevronRight, Heart, X } from "lucide-react";
+import { MapPin, Tag, User, MessageCircle, Shield, Share2, Loader2, ChevronLeft, ChevronRight, Heart, X, ArrowLeft } from "lucide-react";
 import { triggerHaptic, useTelegramUser } from "@/hooks/useTelegramUser";
 import { formatPrice } from "@/lib/currency";
 import { useQuery } from "@tanstack/react-query";

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Eye, DollarSign, Check, Loader2, Heart, PartyPopper, MapPin, Rocket, X } from "lucide-react";
+import { Eye, DollarSign, Check, Loader2, Heart, PartyPopper, MapPin, Rocket, X, ArrowLeft } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
 import { triggerHaptic } from "@/hooks/useTelegramUser";
 
@@ -100,23 +100,23 @@ const Notifications = () => {
                   if (notif.listing_id) navigate(`/listing/${notif.listing_id}`);
                 }}
                 className={`flex items-start gap-3 p-4 rounded-2xl border shadow-sm cursor-pointer transition-colors ${notif.is_read
-                    ? "bg-card border-border/50"
-                    : "bg-accent/30 border-primary/20"
+                  ? "bg-card border-border/50"
+                  : "bg-accent/30 border-primary/20"
                   }`}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${notif.type === "transaction_started" ? "bg-primary/10"
-                    : notif.type === "favorite_added" ? "bg-destructive/10"
-                      : notif.type === "welcome" ? "bg-amber-500/10"
-                        : notif.type === "new_listing_nearby" ? "bg-emerald-500/10"
-                          : notif.type === "boost_activated" ? "bg-primary/10"
-                            : "bg-accent"
+                  : notif.type === "favorite_added" ? "bg-destructive/10"
+                    : notif.type === "welcome" ? "bg-amber-500/10"
+                      : notif.type === "new_listing_nearby" ? "bg-emerald-500/10"
+                        : notif.type === "boost_activated" ? "bg-primary/10"
+                          : "bg-accent"
                   }`}>
                   <Icon className={`w-5 h-5 ${notif.type === "transaction_started" ? "text-primary"
-                      : notif.type === "favorite_added" ? "text-destructive"
-                        : notif.type === "welcome" ? "text-amber-500"
-                          : notif.type === "new_listing_nearby" ? "text-emerald-500"
-                            : notif.type === "boost_activated" ? "text-primary"
-                              : "text-muted-foreground"
+                    : notif.type === "favorite_added" ? "text-destructive"
+                      : notif.type === "welcome" ? "text-amber-500"
+                        : notif.type === "new_listing_nearby" ? "text-emerald-500"
+                          : notif.type === "boost_activated" ? "text-primary"
+                            : "text-muted-foreground"
                     }`} />
                 </div>
                 <div className="flex-1 min-w-0">
