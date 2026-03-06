@@ -38,6 +38,12 @@ const Checkout = () => {
   const { listingId } = useParams<{ listingId: string }>();
   const navigate = useNavigate();
   const { user } = useTelegramUser();
+
+  useEffect(() => {
+    // Escrow is coming soon, redirect if someone somehow lands here
+    navigate("/home");
+  }, [navigate]);
+
   const queryClient = useQueryClient();
   const thumbnail = useListingThumbnail(listingId);
 

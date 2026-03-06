@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -252,8 +253,9 @@ const AppHeader = () => {
             <button
               onClick={() => {
                 triggerHaptic("light");
-                const escrowBot = import.meta.env.VITE_ESCROW_BOT_USERNAME || "TrustPay9jaBot";
-                window.open(`https://t.me/${escrowBot}`, "_blank");
+                toast("Escrow Coming Soon", {
+                  description: "Escrow payments will be enabled later today. Stay tuned!",
+                });
               }}
               className="flex items-center gap-3 p-3 rounded-xl bg-accent/50 hover:bg-accent transition-colors text-left w-full"
             >
@@ -268,7 +270,7 @@ const AppHeader = () => {
             </button>
           </div>
         </SheetContent>
-      </Sheet>
+      </Sheet >
     </>
   );
 };

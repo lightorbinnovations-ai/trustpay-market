@@ -45,10 +45,10 @@ const languages = [
 ];
 
 const faqItems = [
-  { q: "How does TrustPay Escrow work?", a: "When you buy, your payment is held securely in escrow. It's only released to the seller after you confirm delivery. This protects both buyers and sellers." },
+  { q: "How does TrustPay Escrow work?", a: "Escrow is coming later today! When launched, your payment will be held securely and only released to the seller after you confirm delivery. This protects both buyers and sellers." },
   { q: "How do I boost my listing?", a: "Go to Profile → My Listings → Tap 'Boost' on any active listing. Choose a duration and pay with Telegram Stars ⭐. Boosted listings appear at the top of search results." },
-  { q: "How do I contact a seller?", a: "Open any listing and tap 'Chat on Telegram' to message the seller directly. You can also use TrustPay Escrow for secure payments." },
-  { q: "Is my payment safe?", a: "Yes! TrustPay uses escrow protection. Your money is held securely and only released when you confirm delivery." },
+  { q: "How do I contact a seller?", a: "Open any listing and tap 'Chat on Telegram' to message the seller directly. Escrow protection is coming later today for secure payments." },
+  { q: "Is my payment safe?", a: "Yes! While Escrow launches later today, for now, you can chat directly with sellers. Once live, your money will be held securely and only released when you confirm delivery." },
   { q: "How do I post a listing?", a: "Tap the '+' Post button at the bottom, choose Service or Product, fill in the details, and submit. You can add up to 3 photos." },
   { q: "What is the Verified Badge?", a: "Pay 90 Stars (~₦3,330) to get a ✅ badge next to your name for 30 days. It builds trust with buyers." },
 ];

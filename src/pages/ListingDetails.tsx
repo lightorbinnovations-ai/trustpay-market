@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Tag, User, MessageCircle, Shield, Share2, Loader2, ChevronLeft, ChevronRight, Heart, X, ArrowLeft } from "lucide-react";
 import { triggerHaptic, useTelegramUser } from "@/hooks/useTelegramUser";
@@ -326,7 +327,12 @@ const ListingDetails = () => {
               </motion.button>
               <motion.button
                 whileTap={{ scale: 0.97 }}
-                onClick={() => { triggerHaptic("medium"); navigate(`/checkout/${id}`); }}
+                onClick={() => {
+                  triggerHaptic("medium");
+                  toast("Escrow Coming Soon", {
+                    description: "Escrow payments will be enabled later today. Stay tuned!",
+                  });
+                }}
                 className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-card border-2 border-primary text-primary font-semibold text-base shadow-sm"
               >
                 <Shield className="w-5 h-5" /> Use TrustPay Escrow

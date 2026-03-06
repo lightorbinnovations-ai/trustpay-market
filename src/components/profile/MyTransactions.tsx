@@ -62,9 +62,9 @@ const MyTransactions = () => {
         <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center mb-5">
           <span className="text-3xl">💸</span>
         </div>
-        <h2 className="text-lg font-bold text-foreground">No transactions yet</h2>
+        <h2 className="text-lg font-bold text-foreground">Escrow Coming Soon</h2>
         <p className="text-muted-foreground text-sm mt-2 max-w-[240px]">
-          Your escrow payment history will appear here
+          Your secure escrow payment history will appear here once launched later today!
         </p>
       </motion.div>
     );
@@ -88,9 +88,8 @@ const TransactionCard = ({ tx, userId }: { tx: any; userId: number }) => {
   return (
     <motion.div variants={fadeUp} className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden">
       <div className="flex items-center gap-4 p-4">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-          isBuyer ? "bg-destructive/10" : "bg-emerald-100 dark:bg-emerald-900/30"
-        }`}>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isBuyer ? "bg-destructive/10" : "bg-emerald-100 dark:bg-emerald-900/30"
+          }`}>
           {isBuyer ? (
             <ArrowUpRight className="w-5 h-5 text-destructive" />
           ) : (

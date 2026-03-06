@@ -25,8 +25,8 @@ export const translations = {
             privacy: {
                 header: "Privacy & Security",
                 desc: "Your data & safety",
-                escrow: "Escrow Protection",
-                escrow_desc: "All payments are held in escrow until delivery is confirmed. Your funds are always protected.",
+                escrow: "Escrow Protection (Launching Soon)",
+                escrow_desc: "Coming later today: All payments will be held in escrow until delivery is confirmed. Your funds will always be protected.",
                 telegram: "Telegram Identity",
                 telegram_desc: "Your identity is verified through Telegram. We never store passwords — your Telegram account IS your login.",
                 data: "Data Usage",
@@ -66,8 +66,8 @@ export const translations = {
             privacy: {
                 header: "Confidentialité et Sécurité",
                 desc: "Vos données et votre sécurité",
-                escrow: "Protection Séquestre",
-                escrow_desc: "Tous les paiements sont conservés sous séquestre jusqu'à la confirmation de la livraison. Vos fonds sont toujours protégés.",
+                escrow: "Protection Séquestre (Bientôt disponible)",
+                escrow_desc: "Disponible plus tard aujourd'hui : Tous les paiements seront conservés sous séquestre jusqu'à la confirmation de la livraison. Vos fonds seront toujours protégés.",
                 telegram: "Identité Telegram",
                 telegram_desc: "Votre identité est vérifiée via Telegram. Nous ne stockons jamais de mots de passe — votre compte Telegram EST votre identifiant.",
                 data: "Utilisation des Données",
