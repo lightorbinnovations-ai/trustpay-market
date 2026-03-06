@@ -45,6 +45,7 @@ const ListingDetails = () => {
   const [activeImg, setActiveImg] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [isBuyConfirmOpen, setIsBuyConfirmOpen] = useState(false);
+  const [isSoldConfirmOpen, setIsSoldConfirmOpen] = useState(false);
   const { data: images } = useListingImages(id);
   const { isFavorite, toggleFavorite } = useFavorites();
   const { data: listingAds } = useActiveAds("listing-detail", 1);
@@ -81,13 +82,50 @@ const ListingDetails = () => {
     },
     onSuccess: () => {
       triggerHaptic("heavy");
-      toast.success("Item marked as bought! 🎉");
+      toast.success("Purchase recorded! 🎉", { description: "The seller will be notified. Your transaction has been saved." });
       queryClient.invalidateQueries({ queryKey: ["listing", id] });
       queryClient.invalidateQueries({ queryKey: ["my-transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["explore-listings-paged"] });
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to mark as bought");
+    }
+  });
+
+  const markAsSold = useMutation({
+    mutationFn: async () => {
+      if (!listing || user.id === 0) throw new Error("Not ready");
+      const initData = (window as any).Telegram?.WebApp?.initData;
+      if (!initData) throw new Error("Telegram authentication missing");
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/market-actions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseKey}`,
+          "x-telegram-init-data": initData,
+        },
+        body: JSON.stringify({
+          action: "mark_listing_sold",
+          payload: { listing_id: listing.id },
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok || json?.error) throw new Error(json?.error || "Failed to update listing");
+      return json;
+    },
+    onSuccess: () => {
+      triggerHaptic("heavy");
+      toast.success("Listing marked as sold! ✅");
+      queryClient.invalidateQueries({ queryKey: ["listing", id] });
+      queryClient.invalidateQueries({ queryKey: ["seller-listing-count", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["explore-listings-paged"] });
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to mark as sold");
     }
   });
 
@@ -355,6 +393,17 @@ const ListingDetails = () => {
               >
                 Edit Listing
               </motion.button>
+              {listing.status === "active" && (
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => { triggerHaptic("medium"); setIsSoldConfirmOpen(true); }}
+                  disabled={markAsSold.isPending}
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-secondary border border-border/50 text-foreground font-semibold text-sm disabled:opacity-50"
+                >
+                  {markAsSold.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 text-emerald-600" />}
+                  Mark as Sold
+                </motion.button>
+              )}
             </>
           ) : listing.status === "active" ? (
             <>
@@ -425,7 +474,7 @@ const ListingDetails = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Purchase</AlertDialogTitle>
             <AlertDialogDescription>
-              Mark <span className="font-bold text-foreground">{listing?.title}</span> as bought? This will be added to your transaction history and the seller will be notified.
+              Mark <span className="font-bold text-foreground">{listing?.title}</span> as bought? This will be recorded in your transaction history and the seller will be notified.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -435,6 +484,27 @@ const ListingDetails = () => {
               onClick={() => { setIsBuyConfirmOpen(false); markAsBought.mutate(); }}
             >
               Yes, I've Bought This
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm "Mark as Sold" AlertDialog — seller only */}
+      <AlertDialog open={isSoldConfirmOpen} onOpenChange={setIsSoldConfirmOpen}>
+        <AlertDialogContent className="max-w-[320px] mx-auto rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mark as Sold?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will close <span className="font-bold text-foreground">{listing?.title}</span> and hide it from the marketplace feed. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-xl bg-primary hover:bg-primary/90"
+              onClick={() => { setIsSoldConfirmOpen(false); markAsSold.mutate(); }}
+            >
+              Yes, Mark as Sold
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

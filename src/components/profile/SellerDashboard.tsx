@@ -33,6 +33,7 @@ const SellerDashboard = () => {
         .from("transactions")
         .select("*, listings(title)")
         .eq("seller_telegram_id", user.id)
+        .is("boost_listing_id", null) // exclude boost self-purchases from sales
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -96,12 +97,12 @@ const SellerDashboard = () => {
   }, [transactions, filter, customFrom, customTo]);
 
   const stats = useMemo(() => {
+    // Only count real sales (not boost transactions — those are already excluded from the query)
     const completed = filtered.filter((tx) => tx.status === "released" || tx.status === "paid");
     const totalRevenue = completed.reduce((sum, tx) => sum + Number(tx.amount), 0);
     const pending = filtered.filter((tx) => tx.status === "pending").length;
-    // Count sold items from listings status, not transactions
     const totalSold = listings?.filter((l) => l.status === "sold").length ?? 0;
-    return { totalRevenue, totalSold, pending };
+    return { totalRevenue, totalSold, pending, completedCount: completed.length };
   }, [filtered, listings]);
 
   const activeListings = listings?.filter((l) => l.status === "active").length ?? 0;
@@ -134,11 +135,10 @@ const SellerDashboard = () => {
           <button
             key={f.value}
             onClick={() => setFilter(f.value)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-              filter === f.value
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${filter === f.value
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-card text-foreground border-border/50"
-            }`}
+              }`}
           >
             {f.label}
           </button>
@@ -273,13 +273,12 @@ const SellerDashboard = () => {
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-xs font-bold text-foreground">⭐ {tx.amount}</p>
-                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
-                    tx.status === "paid" || tx.status === "released"
+                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${tx.status === "paid" || tx.status === "released"
                       ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                       : tx.status === "pending"
-                      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                      : "bg-secondary text-muted-foreground"
-                  }`}>{tx.status}</span>
+                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        : "bg-secondary text-muted-foreground"
+                    }`}>{tx.status}</span>
                 </div>
               </div>
             ))}
@@ -287,27 +286,28 @@ const SellerDashboard = () => {
         </motion.div>
       )}
 
-      {/* Recent sales */}
+      {/* Recent sales — only real purchases */}
       <motion.div variants={fadeUp}>
         <h3 className="text-sm font-bold text-foreground mb-3">Recent Sales</h3>
         {filtered.length === 0 ? (
-          <p className="text-xs text-muted-foreground py-4 text-center">No transactions in this period</p>
+          <p className="text-xs text-muted-foreground py-4 text-center">No sales in this period</p>
         ) : (
           <div className="flex flex-col gap-2">
             {filtered.slice(0, 10).map((tx: any) => (
               <div key={tx.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border/30">
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold text-foreground truncate">{tx.listings?.title || "Listing"}</p>
-                  <p className="text-[10px] text-muted-foreground">{new Date(tx.created_at).toLocaleDateString()}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Buyer #{tx.buyer_telegram_id} · {new Date(tx.created_at).toLocaleDateString()}
+                  </p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">+{formatNaira(tx.amount)}</p>
-                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
-                    tx.status === "released" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
-                    tx.status === "paid" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
-                    tx.status === "pending" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
-                    "bg-secondary text-muted-foreground"
-                  }`}>{tx.status}</span>
+                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${tx.status === "released" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                      tx.status === "paid" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                        tx.status === "pending" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                          "bg-secondary text-muted-foreground"
+                    }`}>{tx.status}</span>
                 </div>
               </div>
             ))}

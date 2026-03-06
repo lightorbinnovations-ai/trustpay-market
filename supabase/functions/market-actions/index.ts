@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
       case "mark_as_bought": {
         const { listing_id, seller_telegram_id, amount } = payload;
 
-        // 1. Create a completed transaction record
+        // Create a transaction record for the buyer's purchase
         const { data: tx, error: txError } = await supabaseClient
           .from("transactions")
           .insert({
@@ -230,24 +230,42 @@ Deno.serve(async (req) => {
             seller_telegram_id,
             listing_id,
             amount: amount || 0,
-            status: "released" // Mark as completed immediately for manual buy
+            status: "released"
           })
           .select()
           .single();
 
         if (txError) throw txError;
 
-        // 2. Mark listing as sold
-        const { error: listError } = await supabaseClient
+        // NOTE: Listing stays "active" — only the seller can mark it as "sold"
+        result = { success: true, transaction: tx };
+        break;
+      }
+
+      case "mark_listing_sold": {
+        const { listing_id } = payload;
+
+        // Verify the caller is the owner
+        const { data: listing } = await supabaseClient
+          .from("listings")
+          .select("seller_telegram_id")
+          .eq("id", listing_id)
+          .single();
+
+        if (!listing || listing.seller_telegram_id !== userId) {
+          throw new Error("Unauthorized: Only the seller can mark this listing as sold");
+        }
+
+        const { error } = await supabaseClient
           .from("listings")
           .update({ status: "sold" })
           .eq("id", listing_id);
 
-        if (listError) throw listError;
-
-        result = { success: true, transaction: tx };
+        if (error) throw error;
+        result = { success: true };
         break;
       }
+
 
       case "update_transaction_status": {
         const { id, status } = payload;
