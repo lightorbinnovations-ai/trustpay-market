@@ -175,14 +175,30 @@ Deno.serve(async (req) => {
 
       case "track_ad_view": {
         const { id } = payload;
-        await supabaseClient.rpc('increment_ad_views', { ad_id: id });
+        // Don't count the ad owner's own views
+        const { data: adOwner } = await supabaseClient
+          .from("ads")
+          .select("owner_telegram_id")
+          .eq("id", id)
+          .single();
+        if (adOwner && adOwner.owner_telegram_id !== userId) {
+          await supabaseClient.rpc('increment_ad_views', { ad_id: id });
+        }
         result = { success: true };
         break;
       }
 
       case "track_ad_click": {
         const { id } = payload;
-        await supabaseClient.rpc('increment_ad_clicks', { ad_id: id });
+        // Don't count the ad owner's own clicks
+        const { data: adOwner } = await supabaseClient
+          .from("ads")
+          .select("owner_telegram_id")
+          .eq("id", id)
+          .single();
+        if (adOwner && adOwner.owner_telegram_id !== userId) {
+          await supabaseClient.rpc('increment_ad_clicks', { ad_id: id });
+        }
         result = { success: true };
         break;
       }

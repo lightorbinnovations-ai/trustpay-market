@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Tag, User, MessageCircle, Shield, Share2, Loader2, ChevronLeft, ChevronRight, Heart, X, ArrowLeft } from "lucide-react";
+import { MapPin, Tag, User, MessageCircle, Shield, Share2, Loader2, ChevronLeft, ChevronRight, Heart, X, ArrowLeft, CheckCircle } from "lucide-react";
 import { triggerHaptic, useTelegramUser } from "@/hooks/useTelegramUser";
 import { formatPrice } from "@/lib/currency";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -16,7 +16,16 @@ import VerifiedBadge from "@/components/VerifiedBadge";
 import { useVerifiedSeller } from "@/hooks/useVerifiedSeller";
 import { useActiveAds } from "@/hooks/useActiveAds";
 import AdCard from "@/components/AdCard";
-import { CheckCircle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const container = {
   hidden: {},
@@ -35,6 +44,7 @@ const ListingDetails = () => {
   const queryClient = useQueryClient();
   const [activeImg, setActiveImg] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
+  const [isBuyConfirmOpen, setIsBuyConfirmOpen] = useState(false);
   const { data: images } = useListingImages(id);
   const { isFavorite, toggleFavorite } = useFavorites();
   const { data: listingAds } = useActiveAds("listing-detail", 1);
@@ -383,12 +393,7 @@ const ListingDetails = () => {
 
                 <motion.button
                   whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    triggerHaptic("medium");
-                    if (window.confirm("Mark this item as bought? It will be added to your transaction history.")) {
-                      markAsBought.mutate();
-                    }
-                  }}
+                  onClick={() => { triggerHaptic("medium"); setIsBuyConfirmOpen(true); }}
                   disabled={markAsBought.isPending}
                   className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-500/20 disabled:opacity-50"
                 >
@@ -405,7 +410,29 @@ const ListingDetails = () => {
         </motion.div>
       </motion.div>
 
+      {/* Confirm "Mark as Bought" AlertDialog */}
+      <AlertDialog open={isBuyConfirmOpen} onOpenChange={setIsBuyConfirmOpen}>
+        <AlertDialogContent className="max-w-[320px] mx-auto rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Purchase</AlertDialogTitle>
+            <AlertDialogDescription>
+              Mark <span className="font-bold text-foreground">{listing?.title}</span> as bought? This will be added to your transaction history and the seller will be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white"
+              onClick={() => { setIsBuyConfirmOpen(false); markAsBought.mutate(); }}
+            >
+              Yes, I've Bought This
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Full-screen image modal */}
+
       <AnimatePresence>
         {modalOpen && images && images.length > 0 && (
           <motion.div
