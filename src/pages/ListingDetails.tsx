@@ -55,20 +55,29 @@ const ListingDetails = () => {
       const initData = (window as any).Telegram?.WebApp?.initData;
       if (!initData) throw new Error("Telegram authentication missing");
 
-      const { data, error } = await supabase.functions.invoke('market-actions', {
-        body: {
-          action: 'mark_as_bought',
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/market-actions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseKey}`,
+          "x-telegram-init-data": initData,
+        },
+        body: JSON.stringify({
+          action: "mark_as_bought",
           payload: {
             listing_id: listing.id,
             seller_telegram_id: listing.seller_telegram_id,
-            amount: listing.price || 0
-          }
-        },
-        headers: { 'x-telegram-init-data': initData }
+            amount: listing.price || 0,
+          },
+        }),
       });
 
-      if (error) throw error;
-      return data;
+      const json = await res.json();
+      if (!res.ok || json?.error) throw new Error(json?.error || "Failed to complete");
+      return json;
     },
     onSuccess: () => {
       triggerHaptic("heavy");
