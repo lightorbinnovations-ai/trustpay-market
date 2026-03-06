@@ -32,24 +32,21 @@ export async function compressImage(
 
                 ctx.drawImage(img, 0, 0, width, height);
 
-                // Recursive compression
-                let quality = 0.8;
-                const attemptCompression = () => {
-                    canvas.toBlob(
-                        (blob) => {
-                            if (blob && blob.size > maxBytes && quality > 0.1) {
-                                quality -= 0.1;
-                                attemptCompression();
-                            } else {
-                                const name = file.name.replace(/\.[^.]+$/, ".jpg");
-                                resolve(new File([blob || file], name, { type: "image/jpeg" }));
-                            }
-                        },
-                        "image/jpeg",
-                        quality
-                    );
-                };
-                attemptCompression();
+                // Single pass compression to avoid hanging on mobile webviews
+                const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+
+                // Convert dataUrl to File
+                const arr = dataUrl.split(',');
+                const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+                const bstr = atob(arr[1]);
+                let n = bstr.length;
+                const u8arr = new Uint8Array(n);
+                while (n--) {
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+
+                const name = file.name.replace(/\.[^.]+$/, ".jpg");
+                resolve(new File([u8arr], name, { type: mime }));
             };
             img.onerror = () => resolve(file);
             img.src = e.target?.result as string;

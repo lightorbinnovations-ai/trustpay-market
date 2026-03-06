@@ -85,7 +85,7 @@ const CreateAd = () => {
       toast({ title: "Title is required", variant: "destructive" });
       return;
     }
-    if (!image && !video) {
+    if (images.length === 0 && !video) {
       toast({ title: "Add an image or video", variant: "destructive" });
       return;
     }

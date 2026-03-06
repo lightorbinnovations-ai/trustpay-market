@@ -8,7 +8,6 @@ import { formatPrice } from "@/lib/currency";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useListingImages } from "@/hooks/useListingImages";
-import ListingImage from "@/components/ListingImage";
 import { notifyListingView } from "@/hooks/useNotifications";
 import { useFavorites } from "@/hooks/useFavorites";
 import SellerReviews from "@/components/SellerReviews";
@@ -16,6 +15,8 @@ import VerifiedBadge from "@/components/VerifiedBadge";
 import { useVerifiedSeller } from "@/hooks/useVerifiedSeller";
 import { useActiveAds } from "@/hooks/useActiveAds";
 import AdCard from "@/components/AdCard";
+import ReviewForm from "@/components/ReviewForm";
+import ListingImage from "@/components/ListingImage";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,6 +47,8 @@ const ListingDetails = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [isBuyConfirmOpen, setIsBuyConfirmOpen] = useState(false);
   const [isSoldConfirmOpen, setIsSoldConfirmOpen] = useState(false);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [newTransactionId, setNewTransactionId] = useState<string | null>(null);
   const { data: images } = useListingImages(id);
   const { isFavorite, toggleFavorite } = useFavorites();
   const { data: listingAds } = useActiveAds("listing-detail", 1);
@@ -80,9 +83,14 @@ const ListingDetails = () => {
       if (!res.ok || json?.error) throw new Error(json?.error || "Failed to complete");
       return json;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       triggerHaptic("heavy");
-      toast.success("Purchase recorded! 🎉", { description: "The seller will be notified. Your transaction has been saved." });
+      if (data?.transaction?.id) {
+        setNewTransactionId(data.transaction.id);
+        setIsReviewOpen(true);
+      } else {
+        toast.success("Purchase recorded! 🎉", { description: "The seller will be notified. Your transaction has been saved." });
+      }
       queryClient.invalidateQueries({ queryKey: ["listing", id] });
       queryClient.invalidateQueries({ queryKey: ["my-transactions"] });
     },
@@ -466,9 +474,21 @@ const ListingDetails = () => {
             </div>
           )}
         </motion.div>
+
+        {/* Buyer Instruction */}
+        {!isOwner && listing.status === "active" && (
+          <motion.div
+            variants={fadeUp}
+            className="mt-4 p-4 rounded-2xl bg-amber-50 border border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/20"
+          >
+            <p className="text-xs text-amber-800 dark:text-amber-400 leading-relaxed text-center">
+              💡 <strong>Note to Buyer:</strong> After you have completed your purchase with the seller, please remember to return here and click <strong>"I've Bought This"</strong> to record your transaction and rate the seller.
+            </p>
+          </motion.div>
+        )}
       </motion.div>
 
-      {/* Confirm "Mark as Bought" AlertDialog */}
+      {/* Confirmation Dialogs */}
       <AlertDialog open={isBuyConfirmOpen} onOpenChange={setIsBuyConfirmOpen}>
         <AlertDialogContent className="max-w-[320px] mx-auto rounded-2xl">
           <AlertDialogHeader>
@@ -489,7 +509,6 @@ const ListingDetails = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Confirm "Mark as Sold" AlertDialog — seller only */}
       <AlertDialog open={isSoldConfirmOpen} onOpenChange={setIsSoldConfirmOpen}>
         <AlertDialogContent className="max-w-[320px] mx-auto rounded-2xl">
           <AlertDialogHeader>
@@ -510,8 +529,29 @@ const ListingDetails = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Full-screen image modal */}
+      <AlertDialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+        <AlertDialogContent className="max-w-[340px] mx-auto rounded-2xl p-0 overflow-hidden bg-card border border-border/50">
+          <div className="p-1">
+            <div className="flex justify-between items-center p-3 pb-0">
+              <h3 className="text-sm font-bold text-foreground">Purchase Recorded 🎉</h3>
+              <button onClick={() => setIsReviewOpen(false)} className="p-1 rounded-full bg-secondary/80">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+            {newTransactionId && listing?.seller_telegram_id && (
+              <ReviewForm
+                transactionId={newTransactionId}
+                reviewerTelegramId={user.id}
+                sellerTelegramId={listing.seller_telegram_id}
+                listingId={listing.id}
+                onSubmitted={() => setIsReviewOpen(false)}
+              />
+            )}
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
 
+      {/* Full-screen image modal */}
       <AnimatePresence>
         {modalOpen && images && images.length > 0 && (
           <motion.div
@@ -551,7 +591,7 @@ const ListingDetails = () => {
 
             <img
               src={images[activeImg]}
-              alt={listing.title}
+              alt={listing?.title}
               className="max-w-full max-h-[85vh] object-contain"
               onClick={(e) => e.stopPropagation()}
             />
