@@ -64,7 +64,7 @@ const MyTransactions = () => {
         </div>
         <h2 className="text-lg font-bold text-foreground">Escrow Coming Soon</h2>
         <p className="text-muted-foreground text-sm mt-2 max-w-[240px]">
-          Your secure escrow payment history will appear here once launched later today!
+          Your secure escrow payment history will appear here once launched!
         </p>
       </motion.div>
     );

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Globe, Bell, Shield, HelpCircle, ChevronRight, ChevronDown, Check, BadgeCheck, Star, Loader2 } from "lucide-react";
+import { Globe, Bell, Shield, HelpCircle, ChevronRight, ChevronDown, Check, BadgeCheck, Star, Loader2, Rocket } from "lucide-react";
 import { triggerHaptic, useTelegramUser } from "@/hooks/useTelegramUser";
 import { Switch } from "@/components/ui/switch";
 import { useVerifiedSeller } from "@/hooks/useVerifiedSeller";
@@ -45,12 +45,13 @@ const languages = [
 ];
 
 const faqItems = [
-  { q: "How does TrustPay Escrow work?", a: "Escrow is coming later today! When launched, your payment will be held securely and only released to the seller after you confirm delivery. This protects both buyers and sellers." },
+  { q: "How does TrustPay Escrow work?", a: "Escrow is coming soon! When launched, your payment will be held securely and only released to the seller after you confirm delivery. This protects both buyers and sellers." },
   { q: "How do I boost my listing?", a: "Go to Profile → My Listings → Tap 'Boost' on any active listing. Choose a duration and pay with Telegram Stars ⭐. Boosted listings appear at the top of search results." },
-  { q: "How do I contact a seller?", a: "Open any listing and tap 'Chat on Telegram' to message the seller directly. Escrow protection is coming later today for secure payments." },
-  { q: "Is my payment safe?", a: "Yes! While Escrow launches later today, for now, you can chat directly with sellers. Once live, your money will be held securely and only released when you confirm delivery." },
+  { q: "How do I contact a seller?", a: "Open any listing and tap 'Chat on Telegram' to message the seller directly. Escrow protection is coming soon for secure payments." },
+  { q: "Is my payment safe?", a: "Yes! While Escrow launches soon, for now, you can chat directly with sellers. Once live, your money will be held securely and only released when you confirm delivery." },
   { q: "How do I post a listing?", a: "Tap the '+' Post button at the bottom, choose Service or Product, fill in the details, and submit. You can add up to 3 photos." },
   { q: "What is the Verified Badge?", a: "Pay 90 Stars (~₦3,330) to get a ✅ badge next to your name for 30 days. It builds trust with buyers." },
+  { q: "Do you offer other development services?", a: "Yes! If you need a website, Telegram bot, Mini App, Mobile App, or any other custom software solution, please contact our team at LightOrb Innovations. We'll be happy to help you build your dream project!" },
 ];
 
 const SettingsPage = () => {
@@ -336,6 +337,15 @@ const SettingsPage = () => {
                   </div>
                 ))}
                 <div className="p-4 bg-accent/30 space-y-4">
+                  <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                    <p className="text-[11px] font-bold text-primary flex items-center gap-1.5 mb-1">
+                      <Rocket className="w-3.5 h-3.5" /> Need a Custom Solution?
+                    </p>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      Need a <b>Website, Telegram Bot, Mini App, or Mobile App</b>? Contact us at LightOrb Innovations for professional development services!
+                    </p>
+                  </div>
+
                   <p className="text-xs text-muted-foreground">{t.help.need_help}</p>
 
                   <div className="grid grid-cols-1 gap-2">

@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
  * @param pageKey unique identifier per page (e.g. "home", "explore")
  * @param limit max ads to return for this page
  */
-export function useActiveAds(pageKey: string, limit: number = 5) {
+export function useActiveAds(pageKey: string, limit: number = 20) {
   return useQuery({
     queryKey: ["active-ads-weighted", pageKey, limit],
     queryFn: async () => {
@@ -17,12 +17,13 @@ export function useActiveAds(pageKey: string, limit: number = 5) {
         .select("*")
         .eq("status", "active")
         .gte("expires_at", new Date().toISOString())
-        .order("created_at", { ascending: false });
+        .order("stars_paid", { ascending: false }) // Prioritize higher spenders in the initial pool
+        .limit(100); // Fetch top 100 by spend to perform weighted sampling
+
       if (error) throw error;
       if (!data || data.length === 0) return [];
 
       // Weighted random shuffle: higher stars_paid = higher chance of appearing first
-      // Each call produces a unique shuffle since Math.random() is independent
       const weighted = data.map((ad) => ({
         ...ad,
         _weight: Math.random() * Math.sqrt(ad.stars_paid || 1),
@@ -31,7 +32,7 @@ export function useActiveAds(pageKey: string, limit: number = 5) {
 
       return weighted.slice(0, limit);
     },
-    staleTime: 30_000, // re-shuffle every 30s
+    staleTime: 60_000, // re-shuffle every 60s
   });
 }
 

@@ -203,6 +203,36 @@ Deno.serve(async (req) => {
         break;
       }
 
+      case "mark_as_bought": {
+        const { listing_id, seller_telegram_id, amount } = payload;
+
+        // 1. Create a completed transaction record
+        const { data: tx, error: txError } = await supabaseClient
+          .from("transactions")
+          .insert({
+            buyer_telegram_id: userId,
+            seller_telegram_id,
+            listing_id,
+            amount: amount || 0,
+            status: "released" // Mark as completed immediately for manual buy
+          })
+          .select()
+          .single();
+
+        if (txError) throw txError;
+
+        // 2. Mark listing as sold
+        const { error: listError } = await supabaseClient
+          .from("listings")
+          .update({ status: "sold" })
+          .eq("id", listing_id);
+
+        if (listError) throw listError;
+
+        result = { success: true, transaction: tx };
+        break;
+      }
+
       case "update_transaction_status": {
         const { id, status } = payload;
 

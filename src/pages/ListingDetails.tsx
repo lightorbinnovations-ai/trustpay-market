@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Tag, User, MessageCircle, Shield, Share2, Loader2, ChevronLeft, ChevronRight, Heart, X, ArrowLeft } from "lucide-react";
 import { triggerHaptic, useTelegramUser } from "@/hooks/useTelegramUser";
 import { formatPrice } from "@/lib/currency";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useListingImages } from "@/hooks/useListingImages";
 import ListingImage from "@/components/ListingImage";
@@ -16,6 +16,7 @@ import VerifiedBadge from "@/components/VerifiedBadge";
 import { useVerifiedSeller } from "@/hooks/useVerifiedSeller";
 import { useActiveAds } from "@/hooks/useActiveAds";
 import AdCard from "@/components/AdCard";
+import { CheckCircle } from "lucide-react";
 
 const container = {
   hidden: {},
@@ -31,11 +32,45 @@ const ListingDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useTelegramUser();
+  const queryClient = useQueryClient();
   const [activeImg, setActiveImg] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const { data: images } = useListingImages(id);
   const { isFavorite, toggleFavorite } = useFavorites();
   const { data: listingAds } = useActiveAds("listing-detail", 1);
+
+  const markAsBought = useMutation({
+    mutationFn: async () => {
+      if (!listing || user.id === 0) throw new Error("Not ready");
+      const initData = (window as any).Telegram?.WebApp?.initData;
+      if (!initData) throw new Error("Telegram authentication missing");
+
+      const { data, error } = await supabase.functions.invoke('market-actions', {
+        body: {
+          action: 'mark_as_bought',
+          payload: {
+            listing_id: listing.id,
+            seller_telegram_id: listing.seller_telegram_id,
+            amount: listing.price || 0
+          }
+        },
+        headers: { 'x-telegram-init-data': initData }
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      triggerHaptic("heavy");
+      toast.success("Item marked as bought! 🎉");
+      queryClient.invalidateQueries({ queryKey: ["listing", id] });
+      queryClient.invalidateQueries({ queryKey: ["my-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["explore-listings-paged"] });
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to mark as bought");
+    }
+  });
 
   // Swipe gesture support
   const touchStartX = useRef(0);
@@ -302,7 +337,7 @@ const ListingDetails = () => {
                 Edit Listing
               </motion.button>
             </>
-          ) : (
+          ) : listing.status === "active" ? (
             <>
               <motion.button
                 whileTap={{ scale: 0.97 }}
@@ -325,19 +360,47 @@ const ListingDetails = () => {
               >
                 <MessageCircle className="w-5 h-5" /> Chat on Telegram
               </motion.button>
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={() => {
-                  triggerHaptic("medium");
-                  toast("Escrow Coming Soon", {
-                    description: "Escrow payments will be enabled later today. Stay tuned!",
-                  });
-                }}
-                className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-card border-2 border-primary text-primary font-semibold text-base shadow-sm"
-              >
-                <Shield className="w-5 h-5" /> Use TrustPay Escrow
-              </motion.button>
+
+              <div className="p-4 rounded-2xl bg-accent/30 border border-primary/20">
+                <p className="text-[11px] text-muted-foreground leading-relaxed text-center">
+                  <span className="font-bold text-primary">Note:</span> If you're not sure, kindly talk to us <a href="https://t.me/lightorbinnovations" target="_blank" className="font-bold text-primary underline">@lightorbinnovations</a> or call us at <a href="tel:08025100844" className="font-bold text-primary underline">08025100844</a> so we can serve as escrow between you and the seller to avoid scam.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => {
+                    triggerHaptic("medium");
+                    toast("Escrow Coming Soon", {
+                      description: "Escrow payments will be enabled soon. Stay tuned!",
+                    });
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-card border-2 border-primary text-primary font-semibold text-sm shadow-sm"
+                >
+                  <Shield className="w-4 h-4" /> Use Escrow
+                </motion.button>
+
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => {
+                    triggerHaptic("medium");
+                    if (window.confirm("Mark this item as bought? It will be added to your transaction history.")) {
+                      markAsBought.mutate();
+                    }
+                  }}
+                  disabled={markAsBought.isPending}
+                  className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                >
+                  {markAsBought.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                  I've Bought This
+                </motion.button>
+              </div>
             </>
+          ) : (
+            <div className="p-4 rounded-2xl bg-secondary/50 border border-border text-center">
+              <p className="text-sm font-bold text-muted-foreground">Item is no longer available (Sold)</p>
+            </div>
           )}
         </motion.div>
       </motion.div>

@@ -522,11 +522,19 @@ const Checkout = () => {
         </motion.div>
 
         {/* Info Tip */}
-        <motion.div variants={fadeUp} className="flex items-start gap-3 mt-6 p-4 rounded-2xl bg-accent/50 border border-border/30">
-          <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Payment will be held securely in escrow and released to the seller only after you confirm delivery. Your funds are protected.
-          </p>
+        <motion.div variants={fadeUp} className="flex flex-col gap-4 mt-6">
+          <div className="p-4 rounded-2xl bg-accent/30 border border-primary/20">
+            <p className="text-[11px] text-muted-foreground leading-relaxed text-center">
+              <span className="font-bold text-primary">Note:</span> If you're not sure, kindly talk to us <a href="https://t.me/lightorbinnovations" target="_blank" className="font-bold text-primary underline">@lightorbinnovations</a> or call us at <a href="tel:08025100844" className="font-bold text-primary underline">08025100844</a> so we can serve as escrow between you and the seller to avoid scam.
+            </p>
+          </div>
+
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-accent/50 border border-border/30">
+            <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Payment will be held securely in escrow and released to the seller only after you confirm delivery. Your funds are protected.
+            </p>
+          </div>
         </motion.div>
       </motion.div>
     </div>

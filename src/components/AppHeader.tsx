@@ -254,7 +254,7 @@ const AppHeader = () => {
               onClick={() => {
                 triggerHaptic("light");
                 toast("Escrow Coming Soon", {
-                  description: "Escrow payments will be enabled later today. Stay tuned!",
+                  description: "Escrow payments will be enabled soon. Stay tuned!",
                 });
               }}
               className="flex items-center gap-3 p-3 rounded-xl bg-accent/50 hover:bg-accent transition-colors text-left w-full"

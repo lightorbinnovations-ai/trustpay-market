@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Users, Package, DollarSign, BarChart3, Trash2, Ban, CheckCircle, Loader2, Search, Eye, Rocket, Star, TrendingUp, Clock, AlertTriangle, Megaphone, BadgeCheck, Pause, Play, ArrowLeft } from "lucide-react";
+import { Users, Package, DollarSign, BarChart3, Trash2, Ban, CheckCircle, Loader2, Search, Eye, Rocket, Star, TrendingUp, Clock, AlertTriangle, Megaphone, BadgeCheck, Pause, Play, ArrowLeft, MousePointer2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatNaira } from "@/lib/currency";
@@ -612,7 +612,11 @@ const AdsTab = () => {
   const { data: ads, isLoading } = useQuery({
     queryKey: ["admin-ads"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("ads").select("*").order("created_at", { ascending: false }).limit(100);
+      const { data, error } = await supabase
+        .from("ads")
+        .select("*, bot_users(first_name, username)")
+        .order("created_at", { ascending: false })
+        .limit(100);
       if (error) throw error;
       return data;
     },
@@ -676,7 +680,10 @@ const AdsTab = () => {
       <div className="flex flex-col gap-2">
         {ads?.map((ad) => {
           const isActive = ad.status === "active" && ad.expires_at && new Date(ad.expires_at) > now;
-          const isExpired = ad.expires_at && new Date(ad.expires_at) <= now;
+          const isExpired = ad.expires_at && new Date(ad.expires_at) < now;
+          const ownerName = ad.bot_users?.first_name || `ID: ${ad.owner_telegram_id}`;
+          const ownerHandle = ad.bot_users?.username ? `@${ad.bot_users.username}` : "";
+
           return (
             <div key={ad.id} className={`flex items-start gap-3 p-3 rounded-xl bg-card border ${isActive ? "border-indigo-300/50" : "border-border/50"}`}>
               <div className="flex-1 min-w-0">
@@ -688,9 +695,13 @@ const AdsTab = () => {
                         "bg-secondary text-muted-foreground"
                     }`}>{isExpired ? "expired" : ad.status}</span>
                   <span className="text-[10px] text-foreground font-medium">⭐ {ad.stars_paid} · {ad.duration_days}d</span>
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Eye className="w-2.5 h-2.5" /> {(ad as any).views_count || 0}
+                    <MousePointer2 className="w-2.5 h-2.5 ml-1" /> {(ad as any).clicks_count || 0}
+                  </span>
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Owner: {ad.owner_telegram_id} · {new Date(ad.created_at).toLocaleDateString()}
+                  Owner: {ownerName} {ownerHandle && <span className="text-primary/70">{ownerHandle}</span>}
                 </p>
                 {ad.expires_at && (
                   <p className="text-[10px] text-muted-foreground">

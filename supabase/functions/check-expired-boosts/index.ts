@@ -28,8 +28,7 @@ Deno.serve(async (req) => {
       .from("listings")
       .select("id, title, seller_telegram_id, boosted_until")
       .not("boosted_until", "is", null)
-      .lte("boosted_until", now.toISOString())
-      .gte("boosted_until", oneHourAgo);
+      .lte("boosted_until", now.toISOString());
 
     if (error) throw error;
 
@@ -50,12 +49,18 @@ Deno.serve(async (req) => {
     const adminId = adminUser?.telegram_id;
 
     for (const listing of expiredListings) {
-      // Check if we already notified about this expiry
+      // 1. Clear boost in DB immediately (mandatory)
+      await supabase
+        .from("listings")
+        .update({ boosted_until: null })
+        .eq("id", listing.id);
+
+      // 2. Check if we already notified about this expiry (optional notification)
       const { data: existing } = await supabase
         .from("notifications")
         .select("id")
         .eq("recipient_telegram_id", listing.seller_telegram_id)
-        .eq("type", "boost_activated")
+        .eq("type", "boost_expired")
         .eq("listing_id", listing.id)
         .gte("created_at", oneHourAgo)
         .limit(1);
@@ -65,7 +70,7 @@ Deno.serve(async (req) => {
       // Notify seller
       await supabase.from("notifications").insert({
         recipient_telegram_id: listing.seller_telegram_id,
-        type: "boost_activated",
+        type: "boost_expired",
         title: "Boost expired 🚀",
         message: `Your boost for "${listing.title}" has expired. Re-boost to maintain visibility!`,
         listing_id: listing.id,
