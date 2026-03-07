@@ -103,9 +103,8 @@ const CreateAd = () => {
       const payload = {
         title: title.trim(),
         description: description.trim() || null,
-        target_url: linkUrl.trim() || null, // renamed from link_url to target_url in edge function payload
-        duration_days: days,
-        amount: stars, // Edge function uses "amount" for stars
+        link_url: linkUrl.trim() || null,
+        stars_paid: stars,
       };
 
       const { data, error } = await supabase.functions.invoke('market-actions', {
@@ -144,7 +143,8 @@ const CreateAd = () => {
             payload: {
               id: newAd.id,
               image_paths: imagePaths,
-              image_path: imagePaths[0] // Primary image for backward compatibility
+              image_path: imagePaths[0], // Primary image for backward compatibility
+              link_url: linkUrl.trim() || null
             }
           },
           headers: { 'x-telegram-init-data': initData }

@@ -7,18 +7,7 @@ import { useVerifiedSeller } from "@/hooks/useVerifiedSeller";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
-import { translations, Language } from "@/lib/translations";
-import { Phone, Mail, Send } from "lucide-react";
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
-};
-
-const container = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.08 } },
-};
+import { useLanguage } from "@/context/LanguageContext";
 
 const PREFS_KEY = "trustpay_settings";
 
@@ -30,12 +19,10 @@ interface NotifPrefs {
 }
 
 interface Settings {
-  language: string;
   notifications: NotifPrefs;
 }
 
 const defaultSettings: Settings = {
-  language: "en",
   notifications: { listing_views: true, favorites: true, transactions: true, nearby: true },
 };
 
@@ -51,33 +38,41 @@ const faqItems = [
   { q: "Is my payment safe?", a: "Yes! While Escrow launches soon, for now, you can chat directly with sellers. Once live, your money will be held securely and only released when you confirm delivery." },
   { q: "How do I post a listing?", a: "Tap the '+' Post button at the bottom, choose Service or Product, fill in the details, and submit. You can add up to 3 photos." },
   { q: "What is the Verified Badge?", a: "Pay 90 Stars (~₦3,330) to get a ✅ badge next to your name for 30 days. It builds trust with buyers." },
-  { q: "Do you offer other development services?", a: "Yes! If you need a website, Telegram bot, Mini App, Mobile App, or any other custom software solution, please contact our team at LightOrb Innovations. We'll be happy to help you build your dream project!" },
+  { q: "Do you offer other development services?", a: "Yes! If you need a website, Telegram bot, Mini App, or Mobile App, or any other custom software solution, please contact our team at LightOrb Innovations. We'll be happy to help you build your dream project!" },
 ];
 
 const SettingsPage = () => {
   const { user } = useTelegramUser();
+  const { language, setLanguage, t: translate } = useLanguage();
   const { data: verifiedData, isLoading: verifiedLoading } = useVerifiedSeller(user.id);
   const isVerified = !!verifiedData;
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [settings, setSettings] = useState<Settings>(defaultSettings);
+  const [notifications, setNotifications] = useState<NotifPrefs>(defaultSettings.notifications);
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem(PREFS_KEY);
-      if (saved) setSettings(JSON.parse(saved));
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.notifications) setNotifications(parsed.notifications);
+      }
     } catch { /* use defaults */ }
   }, []);
 
-  const save = (updated: Settings) => {
-    setSettings(updated);
-    try { localStorage.setItem(PREFS_KEY, JSON.stringify(updated)); } catch { /* no-op */ }
+  const saveNotifs = (updated: NotifPrefs) => {
+    setNotifications(updated);
+    try {
+      const saved = localStorage.getItem(PREFS_KEY);
+      const parsed = saved ? JSON.parse(saved) : {};
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ ...parsed, notifications: updated }));
+    } catch { /* no-op */ }
   };
 
   const toggleNotif = (key: keyof NotifPrefs) => {
     triggerHaptic("light");
-    const updated = { ...settings, notifications: { ...settings.notifications, [key]: !settings.notifications[key] } };
-    save(updated);
+    const updated = { ...notifications, [key]: !notifications[key] };
+    saveNotifs(updated);
   };
 
   const verifyMutation = useMutation({
@@ -91,21 +86,20 @@ const SettingsPage = () => {
     },
     onSuccess: () => {
       triggerHaptic("heavy");
-      toast({ title: "⭐ Invoice sent to Telegram!", description: "Open Telegram to pay with Stars." });
+      toast({ title: "Stars Invoice Sent!", description: "Check your Telegram notifications to pay." });
     },
     onError: (err: any) => {
       toast({ title: "Failed", description: err.message, variant: "destructive" });
     },
   });
 
-  const setLanguage = (code: string) => {
-    triggerHaptic("light");
-    save({ ...settings, language: code });
+  const handleSetLanguage = (code: string) => {
+    setLanguage(code as Language);
     setExpanded(null);
   };
 
-  const t = (translations[settings.language as Language] || translations.en).settings;
-  const currentLang = languages.find((l) => l.code === settings.language) || languages[0];
+  const t = translate("settings");
+  const currentLang = languages.find((l) => l.code === language) || languages[0];
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="flex flex-col gap-3">
@@ -136,12 +130,12 @@ const SettingsPage = () => {
                 {languages.map((lang) => (
                   <button
                     key={lang.code}
-                    onClick={() => setLanguage(lang.code)}
+                    onClick={() => handleSetLanguage(lang.code)}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-accent/50 transition-colors border-b border-border/20 last:border-b-0"
                   >
                     <span className="text-base">{lang.flag}</span>
                     <span className="text-sm text-foreground flex-1">{lang.label}</span>
-                    {settings.language === lang.code && <Check className="w-4 h-4 text-primary" />}
+                    {language === lang.code && <Check className="w-4 h-4 text-primary" />}
                   </button>
                 ))}
               </div>
@@ -185,7 +179,7 @@ const SettingsPage = () => {
                       <p className="text-sm font-semibold text-foreground">{item.label}</p>
                       <p className="text-[10px] text-muted-foreground">{item.desc}</p>
                     </div>
-                    <Switch checked={settings.notifications[item.key]} onCheckedChange={() => toggleNotif(item.key)} />
+                    <Switch checked={notifications[item.key]} onCheckedChange={() => toggleNotif(item.key)} />
                   </div>
                 ))}
               </div>

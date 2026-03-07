@@ -25,6 +25,8 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
 };
 
+import { useLanguage } from "@/context/LanguageContext";
+
 const Home = () => {
   const { user, isGuest } = useTelegramUser();
   const navigate = useNavigate();
@@ -32,6 +34,7 @@ const Home = () => {
   const { location: userLocation } = useUserLocation();
   const { data: homeAds } = useActiveAds("home", 5);
   const featuredScrollRef = useRef<HTMLDivElement>(null);
+  const { t } = useLanguage();
 
   const { data: featuredListings, isLoading: featuredLoading } = useQuery({
     queryKey: ["featured-listings", userLocation?.country?.code],
@@ -157,10 +160,10 @@ const Home = () => {
       {/* Greeting */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <h1 className="text-2xl font-extrabold text-foreground">
-          Hi, {user.first_name} 👋
+          {t("home.hi")}, {user.first_name} 👋
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {isGuest ? "Open via Telegram to link your account" : `@${user.username || user.first_name} · What do you need today?`}
+          {isGuest ? t("home.guest_link") : `@${user.username || user.first_name} · ${t("home.what_need")}`}
         </p>
       </motion.div>
 
@@ -175,19 +178,19 @@ const Home = () => {
           onClick={() => navigate("/explore")}
           className="w-full flex items-center gap-3 bg-card rounded-2xl px-4 py-3.5 shadow-sm border border-border/50 text-left"
         >
-          <span className="text-muted-foreground text-sm">Search services or products</span>
+          <span className="text-muted-foreground text-sm">{t("home.search_placeholder")}</span>
         </button>
       </motion.div>
 
       {/* Featured Listings */}
       <motion.section variants={stagger} initial="hidden" animate="show" className="mt-8">
         <motion.div variants={fadeUp} className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-foreground">Featured Listings</h2>
+          <h2 className="text-lg font-bold text-foreground">{t("home.featured")}</h2>
           <button
             onClick={() => navigate("/explore")}
             className="text-xs font-semibold text-primary flex items-center gap-0.5"
           >
-            See all <ChevronRight className="w-3.5 h-3.5" />
+            {t("home.see_all")} <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </motion.div>
 
@@ -246,11 +249,11 @@ const Home = () => {
         <motion.div variants={fadeUp} className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-bold text-foreground">
-              {userLocation ? "Near You" : "Recent Listings"}
+              {userLocation ? t("home.near_you") : t("home.recent")}
             </h2>
             {userLocation && (
-              <span className="flex items-center gap-0.5 text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                <Navigation className="w-2.5 h-2.5" /> Live
+              <span className="flex items-center gap-0.5 text-[10px] font-medium text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                <Navigation className="w-2.5 h-2.5" /> {t("home.live")}
               </span>
             )}
           </div>
@@ -258,7 +261,7 @@ const Home = () => {
             onClick={() => navigate("/explore")}
             className="text-xs font-semibold text-primary flex items-center gap-0.5"
           >
-            See all <ChevronRight className="w-3.5 h-3.5" />
+            {t("home.see_all")} <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </motion.div>
 
@@ -267,7 +270,7 @@ const Home = () => {
             <Loader2 className="w-5 h-5 text-primary animate-spin" />
           </div>
         ) : !nearbyListings?.length ? (
-          <p className="text-sm text-muted-foreground py-4">No listings available yet.</p>
+          <p className="text-sm text-muted-foreground py-4">{t("home.no_listings")}</p>
         ) : (
           <div className="flex flex-col gap-3">
             {nearbyListings.map((item: any) => {

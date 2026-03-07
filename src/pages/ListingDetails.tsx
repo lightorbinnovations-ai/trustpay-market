@@ -17,6 +17,7 @@ import { useActiveAds } from "@/hooks/useActiveAds";
 import AdCard from "@/components/AdCard";
 import ReviewForm from "@/components/ReviewForm";
 import ListingImage from "@/components/ListingImage";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +40,7 @@ const fadeUp = {
 };
 
 const ListingDetails = () => {
+  const { t } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useTelegramUser();
@@ -89,10 +91,11 @@ const ListingDetails = () => {
         setNewTransactionId(data.transaction.id);
         setIsReviewOpen(true);
       } else {
-        toast.success("Purchase recorded! 🎉", { description: "The seller will be notified. Your transaction has been saved." });
+        toast.success(t("listing.success_msg") || "Purchase recorded! 🎉", { description: t("listing.success_desc") || "The seller will be notified. Your transaction has been saved." });
       }
       queryClient.invalidateQueries({ queryKey: ["listing", id] });
       queryClient.invalidateQueries({ queryKey: ["my-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["seller-transactions"] });
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to mark as bought");
@@ -127,7 +130,7 @@ const ListingDetails = () => {
     },
     onSuccess: () => {
       triggerHaptic("heavy");
-      toast.success("Listing marked as sold! ✅");
+      toast.success(t("listing.mark_sold_yes") || "Listing marked as sold! ✅");
       queryClient.invalidateQueries({ queryKey: ["listing", id] });
       queryClient.invalidateQueries({ queryKey: ["seller-listing-count", user.id] });
       queryClient.invalidateQueries({ queryKey: ["explore-listings-paged"] });
@@ -309,7 +312,7 @@ const ListingDetails = () => {
                   tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(shareText)}`);
                 } else {
                   navigator.clipboard?.writeText(shareLink);
-                  import("sonner").then(({ toast }) => toast.success("Share link copied!"));
+                  import("sonner").then(({ toast }) => toast.success(t("listing.share_copied") || "Share link copied!"));
                 }
               }}
               className="w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center shadow-sm"
@@ -371,7 +374,7 @@ const ListingDetails = () => {
         {/* Description */}
         {listing.description && (
           <motion.div variants={fadeUp} className="mt-5">
-            <h2 className="text-sm font-bold text-foreground mb-2">Description</h2>
+            <h2 className="text-sm font-bold text-foreground mb-2">{t("listing.description")}</h2>
             <div className="p-4 rounded-2xl bg-card border border-border/50 shadow-sm">
               <p className="text-sm text-muted-foreground leading-relaxed">{listing.description}</p>
             </div>
@@ -399,7 +402,7 @@ const ListingDetails = () => {
                 onClick={() => { triggerHaptic("medium"); navigate(`/edit-listing/${id}`); }}
                 className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-base shadow-lg shadow-primary/25"
               >
-                Edit Listing
+                {t("listing.edit")}
               </motion.button>
               {listing.status === "active" && (
                 <motion.button
@@ -409,7 +412,7 @@ const ListingDetails = () => {
                   className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-secondary border border-border/50 text-foreground font-semibold text-sm disabled:opacity-50"
                 >
                   {markAsSold.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 text-emerald-600" />}
-                  Mark as Sold
+                  {t("listing.mark_sold")}
                 </motion.button>
               )}
             </>
@@ -434,12 +437,12 @@ const ListingDetails = () => {
                 }}
                 className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-base shadow-lg shadow-primary/25"
               >
-                <MessageCircle className="w-5 h-5" /> Chat on Telegram
+                <MessageCircle className="w-5 h-5" /> {t("listing.chat_telegram")}
               </motion.button>
 
               <div className="p-4 rounded-2xl bg-accent/30 border border-primary/20">
                 <p className="text-[11px] text-muted-foreground leading-relaxed text-center">
-                  <span className="font-bold text-primary">Note:</span> If you're not sure, kindly talk to us <a href="https://t.me/lightorbinnovations" target="_blank" className="font-bold text-primary underline">@lightorbinnovations</a> or call us at <a href="tel:08025100844" className="font-bold text-primary underline">08025100844</a> so we can serve as escrow between you and the seller to avoid scam.
+                  <span className="font-bold text-primary">{t("listing.escrow_note")}:</span> {t("listing.escrow_instruction")}
                 </p>
               </div>
 
@@ -454,7 +457,7 @@ const ListingDetails = () => {
                   }}
                   className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-card border-2 border-primary text-primary font-semibold text-sm shadow-sm"
                 >
-                  <Shield className="w-4 h-4" /> Use Escrow
+                  <Shield className="w-4 h-4" /> {t("listing.use_escrow")}
                 </motion.button>
 
                 <motion.button
@@ -464,13 +467,13 @@ const ListingDetails = () => {
                   className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-500/20 disabled:opacity-50"
                 >
                   {markAsBought.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                  I've Bought This
+                  {t("listing.bought_this")}
                 </motion.button>
               </div>
             </>
           ) : (
             <div className="p-4 rounded-2xl bg-secondary/50 border border-border text-center">
-              <p className="text-sm font-bold text-muted-foreground">Item is no longer available (Sold)</p>
+              <p className="text-sm font-bold text-muted-foreground">{t("listing.sold_out")}</p>
             </div>
           )}
         </motion.div>
@@ -482,7 +485,7 @@ const ListingDetails = () => {
             className="mt-4 p-4 rounded-2xl bg-amber-50 border border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/20"
           >
             <p className="text-xs text-amber-800 dark:text-amber-400 leading-relaxed text-center">
-              💡 <strong>Note to Buyer:</strong> After you have completed your purchase with the seller, please remember to return here and click <strong>"I've Bought This"</strong> to record your transaction and rate the seller.
+              💡 <strong>{t("listing.buy_note")}:</strong> {t("listing.buy_instruction")}
             </p>
           </motion.div>
         )}
@@ -492,18 +495,18 @@ const ListingDetails = () => {
       <AlertDialog open={isBuyConfirmOpen} onOpenChange={setIsBuyConfirmOpen}>
         <AlertDialogContent className="max-w-[320px] mx-auto rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Purchase</AlertDialogTitle>
+            <AlertDialogTitle>{t("listing.confirm_purchase")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Mark <span className="font-bold text-foreground">{listing?.title}</span> as bought? This will be recorded in your transaction history and the seller will be notified.
+              {t("listing.confirm_desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl">{t("listing.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white"
               onClick={() => { setIsBuyConfirmOpen(false); markAsBought.mutate(); }}
             >
-              Yes, I've Bought This
+              {t("listing.confirm_yes")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -512,18 +515,18 @@ const ListingDetails = () => {
       <AlertDialog open={isSoldConfirmOpen} onOpenChange={setIsSoldConfirmOpen}>
         <AlertDialogContent className="max-w-[320px] mx-auto rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Mark as Sold?</AlertDialogTitle>
+            <AlertDialogTitle>{t("listing.mark_sold_title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will close <span className="font-bold text-foreground">{listing?.title}</span> and hide it from the marketplace feed. This action cannot be undone.
+              {t("listing.mark_sold_desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl">{t("listing.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="rounded-xl bg-primary hover:bg-primary/90"
               onClick={() => { setIsSoldConfirmOpen(false); markAsSold.mutate(); }}
             >
-              Yes, Mark as Sold
+              {t("listing.mark_sold_yes")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -533,7 +536,7 @@ const ListingDetails = () => {
         <AlertDialogContent className="max-w-[340px] mx-auto rounded-2xl p-0 overflow-hidden bg-card border border-border/50">
           <div className="p-1">
             <div className="flex justify-between items-center p-3 pb-0">
-              <h3 className="text-sm font-bold text-foreground">Purchase Recorded 🎉</h3>
+              <h3 className="text-sm font-bold text-foreground">{t("listing.purchase_recorded")}</h3>
               <button onClick={() => setIsReviewOpen(false)} className="p-1 rounded-full bg-secondary/80">
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>

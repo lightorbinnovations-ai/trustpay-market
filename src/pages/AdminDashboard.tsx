@@ -22,6 +22,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 type Tab = "overview" | "users" | "listings" | "transactions" | "boosts" | "ads" | "badges";
 
 const fadeUp = {
@@ -30,6 +32,7 @@ const fadeUp = {
 };
 
 const AdminDashboard = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { isAdmin } = useAdmin();
   const [tab, setTab] = useState<Tab>("overview");
@@ -41,21 +44,21 @@ const AdminDashboard = () => {
         <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mb-5">
           <Ban className="w-8 h-8 text-destructive" />
         </div>
-        <h2 className="text-lg font-bold text-foreground">Access Denied</h2>
-        <p className="text-muted-foreground text-sm mt-2">You don't have admin privileges.</p>
+        <h2 className="text-lg font-bold text-foreground">{t("admin.access_denied")}</h2>
+        <p className="text-muted-foreground text-sm mt-2">{t("admin.not_admin")}</p>
         <button onClick={() => navigate("/home")} className="mt-4 text-primary font-semibold text-sm">Go Home</button>
       </div>
     );
   }
 
   const tabs: { value: Tab; label: string; icon: typeof Users }[] = [
-    { value: "overview", label: "Overview", icon: BarChart3 },
-    { value: "users", label: "Users", icon: Users },
-    { value: "listings", label: "Listings", icon: Package },
+    { value: "overview", label: t("admin.overview"), icon: BarChart3 },
+    { value: "users", label: t("admin.users"), icon: Users },
+    { value: "listings", label: t("admin.listings"), icon: Package },
     { value: "boosts", label: "Boosts", icon: Rocket },
     { value: "ads", label: "Ads", icon: Megaphone },
     { value: "badges", label: "Badges", icon: BadgeCheck },
-    { value: "transactions", label: "Txns", icon: DollarSign },
+    { value: "transactions", label: t("admin.txns"), icon: DollarSign },
   ];
 
   return (
@@ -68,8 +71,8 @@ const AdminDashboard = () => {
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <div>
-          <h1 className="text-2xl font-extrabold text-foreground">Admin Panel</h1>
-          <p className="text-muted-foreground text-sm mt-1">Manage your marketplace</p>
+          <h1 className="text-2xl font-extrabold text-foreground">{t("admin.header")}</h1>
+          <p className="text-muted-foreground text-sm mt-1">{t("admin.desc")}</p>
         </div>
       </motion.div>
 
@@ -98,7 +101,7 @@ const AdminDashboard = () => {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={tab === "users" ? "Search users..." : "Search listings..."}
+            placeholder={tab === "users" ? t("admin.search_users") : t("admin.search_listings")}
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
         </div>
@@ -124,27 +127,30 @@ const OverviewTab = () => {
     queryFn: async () => {
       const [users, listings, transactions, reviews, ads, badges] = await Promise.all([
         supabase.from("bot_users").select("id", { count: "exact", head: true }),
-        supabase.from("listings").select("id, status, boosted_until", { count: "exact" }),
-        supabase.from("transactions").select("id, amount, status, boost_listing_id, created_at", { count: "exact" }),
+        supabase.from("listings").select("id, status, boosted_until"),
+        supabase.from("transactions").select("id, amount, status, boost_listing_id, created_at, badge_type"),
         supabase.from("reviews").select("id", { count: "exact", head: true }),
-        supabase.from("ads").select("id, status, stars_paid"),
+        supabase.from("ads").select("id, status, stars_paid, expires_at"),
         supabase.from("verified_sellers").select("id, stars_paid, expires_at"),
       ]);
 
+      const now = new Date().toISOString();
+      const totalListings = listings.data?.length ?? 0;
       const activeListings = listings.data?.filter((l) => l.status === "active").length ?? 0;
       const soldListings = listings.data?.filter((l) => l.status === "sold").length ?? 0;
-      const now = new Date().toISOString();
       const activeBoosted = listings.data?.filter((l) => l.boosted_until && l.boosted_until > now).length ?? 0;
 
+      // Completed transactions (including badges/boosts)
       const completedTxns = transactions.data?.filter((t) => t.status === "released" || t.status === "paid") ?? [];
       const totalRevenue = completedTxns.reduce((sum, t) => sum + Number(t.amount), 0);
 
+      // Stars revenue Breakdown
       const boostTxns = transactions.data?.filter((t) => t.boost_listing_id && (t.status === "paid" || t.status === "released")) ?? [];
       const boostRevenue = boostTxns.reduce((sum, t) => sum + Number(t.amount), 0);
 
-      // Stars revenue
       const adStars = ads.data?.reduce((sum, a) => sum + (a.stars_paid || 0), 0) ?? 0;
-      const activeAds = ads.data?.filter((a) => a.status === "active").length ?? 0;
+      const activeAds = ads.data?.filter((a) => a.status === "active" && a.expires_at && a.expires_at > now).length ?? 0;
+
       const badgeStars = badges.data?.reduce((sum, b) => sum + (b.stars_paid || 0), 0) ?? 0;
       const activeBadges = badges.data?.filter((b) => b.expires_at && b.expires_at > now).length ?? 0;
 
@@ -162,11 +168,11 @@ const OverviewTab = () => {
 
       return {
         totalUsers: users.count ?? 0,
-        totalListings: listings.count ?? 0,
+        totalListings,
         activeListings,
         soldListings,
         activeBoosted,
-        totalTransactions: transactions.count ?? 0,
+        totalTransactions: transactions.data?.length ?? 0,
         totalRevenue,
         boostRevenue,
         totalReviews: reviews.count ?? 0,

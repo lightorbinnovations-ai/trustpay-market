@@ -3,19 +3,22 @@ import { motion } from "framer-motion";
 import { Home, Compass, PlusCircle, Grid3X3, User } from "lucide-react";
 import { triggerHaptic } from "@/hooks/useTelegramUser";
 
-const tabs = [
-  { path: "/home", icon: Home, label: "Home" },
-  { path: "/explore", icon: Compass, label: "Explore" },
-  { path: "/post", icon: PlusCircle, label: "Post" },
-  { path: "/categories", icon: Grid3X3, label: "Categories" },
-  { path: "/profile", icon: User, label: "Profile" },
-];
+import { useLanguage } from "@/context/LanguageContext";
 
 const BottomNav = () => {
+  const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handleTabClick = (tab: typeof tabs[0]) => {
+  const tabs = [
+    { path: "/home", icon: Home, label: t("nav.home") },
+    { path: "/explore", icon: Compass, label: t("nav.explore") },
+    { path: "/post", icon: PlusCircle, label: t("nav.post") },
+    { path: "/categories", icon: Grid3X3, label: t("nav.categories") || "Categories" },
+    { path: "/profile", icon: User, label: t("nav.profile") },
+  ];
+
+  const handleTabClick = (tab: any) => {
     triggerHaptic("light");
     navigate(tab.path);
   };
@@ -41,14 +44,12 @@ const BottomNav = () => {
                   />
                 )}
                 <Icon
-                  className={`relative z-10 w-5 h-5 transition-colors ${
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  }`}
+                  className={`relative z-10 w-5 h-5 transition-colors ${isActive ? "text-primary" : "text-muted-foreground"
+                    }`}
                 />
                 <span
-                  className={`relative z-10 text-[10px] font-semibold transition-colors ${
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  }`}
+                  className={`relative z-10 text-[10px] font-semibold transition-colors ${isActive ? "text-primary" : "text-muted-foreground"
+                    }`}
                 >
                   {tab.label}
                 </span>

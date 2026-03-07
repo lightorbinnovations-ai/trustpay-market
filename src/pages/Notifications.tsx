@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Eye, DollarSign, Check, Loader2, Heart, PartyPopper, MapPin, Rocket, X, ArrowLeft } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
 import { triggerHaptic } from "@/hooks/useTelegramUser";
+import { useLanguage } from "@/context/LanguageContext";
 
 const iconMap: Record<string, typeof Eye> = {
   listing_view: Eye,
@@ -24,18 +25,19 @@ const container = {
 };
 
 const Notifications = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { notifications, isLoading, unreadCount, markAsRead, markAllRead, deleteNotification } = useNotifications();
 
   const timeAgo = (date: string) => {
     const diff = Date.now() - new Date(date).getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "Just now";
-    if (mins < 60) return `${mins}m ago`;
+    if (mins < 1) return t("notifications.just_now") || "Just now";
+    if (mins < 60) return `${mins}${t("notifications.mins_ago") || "m ago"}`;
     const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
+    if (hours < 24) return `${hours}${t("notifications.hours_ago") || "h ago"}`;
     const days = Math.floor(hours / 24);
-    return `${days}d ago`;
+    return `${days}${t("notifications.days_ago") || "d ago"}`;
   };
 
   return (
@@ -52,7 +54,7 @@ const Notifications = () => {
           >
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
-          <h1 className="text-xl font-extrabold text-foreground">Notifications</h1>
+          <h1 className="text-xl font-extrabold text-foreground">{t("nav.notifications")}</h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -61,7 +63,7 @@ const Notifications = () => {
               onClick={() => { triggerHaptic("light"); markAllRead.mutate(); }}
               className="text-xs font-semibold text-primary px-3 py-1.5 rounded-lg bg-primary/10"
             >
-              Mark all read
+              {t("notifications.mark_all_read") || "Mark all read"}
             </button>
           )}
           <button
@@ -83,8 +85,8 @@ const Notifications = () => {
           <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center mb-5">
             <span className="text-3xl">🔔</span>
           </div>
-          <h2 className="text-lg font-bold text-foreground">No notifications yet</h2>
-          <p className="text-muted-foreground text-sm mt-2">You'll be notified when someone views your listings</p>
+          <h2 className="text-lg font-bold text-foreground">{t("notifications.no_notifs") || "No notifications yet"}</h2>
+          <p className="text-muted-foreground text-sm mt-2">{t("notifications.notif_desc") || "You'll be notified of marketplace updates"}</p>
         </motion.div>
       ) : (
         <motion.div variants={container} initial="hidden" animate="show" className="flex flex-col gap-2">

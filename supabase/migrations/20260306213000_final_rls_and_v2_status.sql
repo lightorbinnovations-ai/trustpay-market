@@ -2,7 +2,7 @@
 DROP POLICY IF EXISTS "Users can view their own transactions" ON public.transactions;
 CREATE POLICY "Users can view their own transactions" ON public.transactions
   FOR SELECT USING (
-    (auth.uid() IS NOT NULL AND (buyer_telegram_id::text = auth.uid() OR seller_telegram_id::text = auth.uid()))
+    (auth.uid() IS NOT NULL AND (buyer_telegram_id::text = auth.uid()::text OR seller_telegram_id::text = auth.uid()::text))
     OR 
     -- Workaround for cases where traditional auth.uid() is not populated but the telegram user is querying
     -- In this app, we rely on the client passing the telegram ID in the query filter.

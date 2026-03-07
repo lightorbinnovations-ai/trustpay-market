@@ -16,6 +16,8 @@ import { Slider } from "@/components/ui/slider";
 import { useActiveAds, getAdForIndex } from "@/hooks/useActiveAds";
 import AdCard from "@/components/AdCard";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 const PAGE_SIZE = 20;
 const RECENT_SEARCHES_KEY = "trustpay_recent_searches";
 const MAX_RECENT = 6;
@@ -54,6 +56,7 @@ const fadeUp = {
 };
 
 const Explore = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialQ = searchParams.get("q") || "";
@@ -173,8 +176,8 @@ const Explore = () => {
   return (
     <div className="px-5 pt-4">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-extrabold text-foreground">Explore</h1>
-        <p className="text-muted-foreground text-sm mt-1">Browse all listings</p>
+        <h1 className="text-2xl font-extrabold text-foreground">{t("explore.header")}</h1>
+        <p className="text-muted-foreground text-sm mt-1">{t("explore.search")}</p>
       </motion.div>
 
       {/* Search bar */}
@@ -188,7 +191,7 @@ const Explore = () => {
               onFocus={() => setShowRecent(true)}
               onBlur={() => setTimeout(() => setShowRecent(false), 200)}
               onKeyDown={(e) => { if (e.key === "Enter" && query.trim()) { saveRecentSearch(query); setRecentSearches(getRecentSearches()); setShowRecent(false); } }}
-              placeholder="Search listings..."
+              placeholder={t("explore.search")}
               className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
             />
             {query && (
@@ -199,9 +202,8 @@ const Explore = () => {
           </div>
           <button
             onClick={() => { triggerHaptic("light"); setShowSort(!showSort); }}
-            className={`w-11 h-11 rounded-2xl border flex items-center justify-center shadow-sm transition-colors ${
-              showSort ? "bg-primary border-primary" : "bg-card border-border/50"
-            }`}
+            className={`w-11 h-11 rounded-2xl border flex items-center justify-center shadow-sm transition-colors ${showSort ? "bg-primary border-primary" : "bg-card border-border/50"
+              }`}
           >
             <SlidersHorizontal className={`w-4 h-4 ${showSort ? "text-primary-foreground" : "text-muted-foreground"}`} />
           </button>
@@ -242,11 +244,10 @@ const Explore = () => {
               <button
                 key={s.value}
                 onClick={() => { triggerHaptic("light"); setSort(s.value); }}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                  sort === s.value
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-card text-foreground border-border/50"
-                }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${sort === s.value
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-card text-foreground border-border/50"
+                  }`}
               >
                 {s.label}
               </button>
@@ -270,11 +271,10 @@ const Explore = () => {
           <button
             key={cat}
             onClick={() => { triggerHaptic("light"); setActiveCategory(cat); }}
-            className={`shrink-0 px-3.5 py-2 rounded-full text-xs font-semibold border transition-colors ${
-              activeCategory === cat
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-card text-foreground border-border/50"
-            }`}
+            className={`shrink-0 px-3.5 py-2 rounded-full text-xs font-semibold border transition-colors ${activeCategory === cat
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-card text-foreground border-border/50"
+              }`}
           >
             {cat}
           </button>
@@ -309,9 +309,9 @@ const Explore = () => {
           >
             <span className="text-4xl">🔍</span>
           </motion.div>
-          <h2 className="text-lg font-bold text-foreground">No listings found</h2>
+          <h2 className="text-lg font-bold text-foreground">{t("explore.no_results")}</h2>
           <p className="text-muted-foreground text-sm mt-2 max-w-[240px]">
-            {query.trim() ? `No results for "${query}". Try a different search term.` : "Try a different category or adjust your filters."}
+            {query.trim() ? `${t("explore.no_results")} "${query}".` : t("explore.no_results")}
           </p>
           {query.trim() && (
             <button
@@ -341,9 +341,8 @@ const Explore = () => {
                     animate="show"
                     whileTap={{ scale: 0.97 }}
                     onClick={() => { triggerHaptic("light"); navigate(`/listing/${item.id}`); }}
-                    className={`rounded-2xl overflow-hidden bg-card border shadow-sm cursor-pointer ${
-                      isBoosted ? "border-primary/40 ring-1 ring-primary/20" : "border-border/50"
-                    }`}
+                    className={`rounded-2xl overflow-hidden bg-card border shadow-sm cursor-pointer ${isBoosted ? "border-primary/40 ring-1 ring-primary/20" : "border-border/50"
+                      }`}
                   >
                     <div className="relative h-28 overflow-hidden">
                       <ListingImage src={thumbs?.[item.id]} alt={item.title} className="w-full h-full" />

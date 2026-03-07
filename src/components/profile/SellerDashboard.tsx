@@ -19,8 +19,11 @@ const container = {
   show: { transition: { staggerChildren: 0.06 } },
 };
 
+import { useLanguage } from "@/context/LanguageContext";
+
 const SellerDashboard = () => {
   const { user } = useTelegramUser();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [filter, setFilter] = useState<DateFilter>("all");
   const [customFrom, setCustomFrom] = useState("");
@@ -97,12 +100,22 @@ const SellerDashboard = () => {
   }, [transactions, filter, customFrom, customTo]);
 
   const stats = useMemo(() => {
-    // Only count real sales (not boost transactions — those are already excluded from the query)
+    // Only count completed sales for revenue
     const completed = filtered.filter((tx) => tx.status === "released" || tx.status === "paid");
-    const totalRevenue = completed.reduce((sum, tx) => sum + Number(tx.amount), 0);
-    const pending = filtered.filter((tx) => tx.status === "pending").length;
-    const totalSold = listings?.filter((l) => l.status === "sold").length ?? 0;
-    return { totalRevenue, totalSold, pending, completedCount: completed.length };
+    const totalRevenue = completed.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+
+    // Items Bought (confirmed by buyers but maybe not marked as 'sold' by seller yet)
+    const itemsBought = filtered.length;
+
+    // Total Sold (actually closed by seller)
+    const totalSoldCount = listings?.filter((l) => l.status === "sold").length ?? 0;
+
+    return {
+      totalRevenue,
+      totalSold: totalSoldCount,
+      itemsBought,
+      completedCount: completed.length
+    };
   }, [filtered, listings]);
 
   const activeListings = listings?.filter((l) => l.status === "active").length ?? 0;
@@ -110,7 +123,7 @@ const SellerDashboard = () => {
   const activeBoostedListings = listings?.filter((l) => l.boosted_until && new Date(l.boosted_until) > now) ?? [];
   const totalBoostSpend = boostTransactions
     ?.filter((t) => t.status === "paid" || t.status === "released")
-    .reduce((sum, t) => sum + Number(t.amount), 0) ?? 0;
+    .reduce((sum, t) => sum + Number(t.amount || 0), 0) ?? 0;
 
   if (isLoading) {
     return (
@@ -136,8 +149,8 @@ const SellerDashboard = () => {
             key={f.value}
             onClick={() => setFilter(f.value)}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${filter === f.value
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-card text-foreground border-border/50"
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-card text-foreground border-border/50"
               }`}
           >
             {f.label}
@@ -174,7 +187,7 @@ const SellerDashboard = () => {
           <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-2">
             <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <p className="text-[10px] text-muted-foreground uppercase font-medium">Revenue</p>
+          <p className="text-[10px] text-muted-foreground uppercase font-medium">{t("profile.revenue")}</p>
           <p className="text-lg font-extrabold text-foreground mt-0.5">{formatNaira(stats.totalRevenue)}</p>
         </motion.div>
 
@@ -182,7 +195,7 @@ const SellerDashboard = () => {
           <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-2">
             <TrendingUp className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <p className="text-[10px] text-muted-foreground uppercase font-medium">Items Sold</p>
+          <p className="text-[10px] text-muted-foreground uppercase font-medium">{t("profile.items_sold")}</p>
           <p className="text-lg font-extrabold text-foreground mt-0.5">{stats.totalSold}</p>
         </motion.div>
 
@@ -190,7 +203,7 @@ const SellerDashboard = () => {
           <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-2">
             <Package className="w-4 h-4 text-amber-600 dark:text-amber-400" />
           </div>
-          <p className="text-[10px] text-muted-foreground uppercase font-medium">Active Listings</p>
+          <p className="text-[10px] text-muted-foreground uppercase font-medium">{t("profile.active_listings")}</p>
           <p className="text-lg font-extrabold text-foreground mt-0.5">{activeListings}</p>
         </motion.div>
 
@@ -198,8 +211,8 @@ const SellerDashboard = () => {
           <div className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center mb-2">
             <Calendar className="w-4 h-4 text-primary" />
           </div>
-          <p className="text-[10px] text-muted-foreground uppercase font-medium">Pending</p>
-          <p className="text-lg font-extrabold text-foreground mt-0.5">{stats.pending}</p>
+          <p className="text-[10px] text-muted-foreground uppercase font-medium">{t("profile.items_bought")}</p>
+          <p className="text-lg font-extrabold text-foreground mt-0.5">{stats.itemsBought}</p>
         </motion.div>
       </div>
 
@@ -274,10 +287,10 @@ const SellerDashboard = () => {
                 <div className="text-right shrink-0">
                   <p className="text-xs font-bold text-foreground">⭐ {tx.amount}</p>
                   <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${tx.status === "paid" || tx.status === "released"
-                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                      : tx.status === "pending"
-                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                        : "bg-secondary text-muted-foreground"
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                    : tx.status === "pending"
+                      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                      : "bg-secondary text-muted-foreground"
                     }`}>{tx.status}</span>
                 </div>
               </div>
@@ -304,9 +317,9 @@ const SellerDashboard = () => {
                 <div className="text-right shrink-0">
                   <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">+{formatNaira(tx.amount)}</p>
                   <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${tx.status === "released" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
-                      tx.status === "paid" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
-                        tx.status === "pending" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
-                          "bg-secondary text-muted-foreground"
+                    tx.status === "paid" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                      tx.status === "pending" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                        "bg-secondary text-muted-foreground"
                     }`}>{tx.status}</span>
                 </div>
               </div>

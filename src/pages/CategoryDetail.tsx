@@ -12,6 +12,8 @@ import ListingImage from "@/components/ListingImage";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useActiveAds, getAdForIndex } from "@/hooks/useActiveAds";
 import AdCard from "@/components/AdCard";
+import { useLanguage } from "@/context/LanguageContext";
+import { translations } from "@/lib/translations";
 
 const PAGE_SIZE = 20;
 
@@ -26,6 +28,7 @@ const fadeUp = {
 };
 
 const CategoryDetail = () => {
+  const { t } = useLanguage();
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const decoded = decodeURIComponent(name || "");
@@ -75,12 +78,18 @@ const CategoryDetail = () => {
 
   const now = new Date();
 
+  const getTranslatedCategory = (key: string) => {
+    // Find the key in categories names
+    const entry = Object.entries(translations.en.categories.names).find(([k, v]) => v === key);
+    return entry ? t(`categories.names.${entry[0]}`) : key;
+  };
+
   return (
     <div className="px-5 pt-4">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <h1 className="text-2xl font-extrabold text-foreground">{decoded}</h1>
+        <h1 className="text-2xl font-extrabold text-foreground">{getTranslatedCategory(decoded)}</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {isLoading ? "Loading..." : `${listings.length} listing${listings.length !== 1 ? "s" : ""} found`}
+          {isLoading ? (t("categories.loading") || "Loading...") : `${listings.length} ${t("categories.results_found") || "found"}`}
         </p>
       </motion.div>
 
@@ -96,46 +105,45 @@ const CategoryDetail = () => {
               const adItem = getAdForIndex(idx, categoryAds, 6);
               return (
                 <React.Fragment key={item.id}>
-                {adItem && <AdCard ad={adItem} />}
-                <motion.div
-                  variants={fadeUp}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => { triggerHaptic("light"); navigate(`/listing/${item.id}`); }}
-                  className={`rounded-2xl bg-card border shadow-sm overflow-hidden cursor-pointer active:shadow-md transition-shadow ${
-                    isBoosted ? "border-primary/40 ring-1 ring-primary/20" : "border-border/50"
-                  }`}
-                >
-                  <div className="relative h-28 overflow-hidden">
-                    <ListingImage src={thumbs?.[item.id]} alt={item.title} className="w-full h-full" />
-                    {isBoosted && (
-                      <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/90 backdrop-blur-sm">
-                        <Rocket className="w-2.5 h-2.5 text-primary-foreground" />
-                        <span className="text-[9px] font-bold text-primary-foreground">PROMOTED</span>
-                      </div>
-                    )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        triggerHaptic("medium");
-                        toggleFavorite.mutate(item.id);
-                      }}
-                      className="absolute top-2 right-2 w-7 h-7 rounded-full bg-card/70 backdrop-blur-sm flex items-center justify-center"
-                    >
-                      <Heart className={`w-3.5 h-3.5 transition-colors ${isFavorite(item.id) ? "fill-destructive text-destructive" : "text-muted-foreground"}`} />
-                    </button>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-sm font-bold text-foreground truncate">{item.title}</p>
-                    <p className="text-primary font-bold text-base mt-1">
-                      {formatPrice(item.price || 0, item.country)}
-                    </p>
-                    {item.city && (
-                      <span className="flex items-center gap-1 text-muted-foreground text-[10px] mt-1">
-                        <MapPin className="w-3 h-3" /> {item.city}
-                      </span>
-                    )}
-                  </div>
-                </motion.div>
+                  {adItem && <AdCard ad={adItem} />}
+                  <motion.div
+                    variants={fadeUp}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => { triggerHaptic("light"); navigate(`/listing/${item.id}`); }}
+                    className={`rounded-2xl bg-card border shadow-sm overflow-hidden cursor-pointer active:shadow-md transition-shadow ${isBoosted ? "border-primary/40 ring-1 ring-primary/20" : "border-border/50"
+                      }`}
+                  >
+                    <div className="relative h-28 overflow-hidden">
+                      <ListingImage src={thumbs?.[item.id]} alt={item.title} className="w-full h-full" />
+                      {isBoosted && (
+                        <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/90 backdrop-blur-sm">
+                          <Rocket className="w-2.5 h-2.5 text-primary-foreground" />
+                          <span className="text-[9px] font-bold text-primary-foreground">{t("categories.promoted") || "PROMOTED"}</span>
+                        </div>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerHaptic("medium");
+                          toggleFavorite.mutate(item.id);
+                        }}
+                        className="absolute top-2 right-2 w-7 h-7 rounded-full bg-card/70 backdrop-blur-sm flex items-center justify-center"
+                      >
+                        <Heart className={`w-3.5 h-3.5 transition-colors ${isFavorite(item.id) ? "fill-destructive text-destructive" : "text-muted-foreground"}`} />
+                      </button>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-sm font-bold text-foreground truncate">{item.title}</p>
+                      <p className="text-primary font-bold text-base mt-1">
+                        {formatPrice(item.price || 0, item.country)}
+                      </p>
+                      {item.city && (
+                        <span className="flex items-center gap-1 text-muted-foreground text-[10px] mt-1">
+                          <MapPin className="w-3 h-3" /> {item.city}
+                        </span>
+                      )}
+                    </div>
+                  </motion.div>
                 </React.Fragment>
               );
             })}
@@ -153,19 +161,20 @@ const CategoryDetail = () => {
           <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center mb-5">
             <span className="text-3xl">📭</span>
           </div>
-          <h2 className="text-lg font-bold text-foreground">No listings yet</h2>
+          <h2 className="text-lg font-bold text-foreground">{t("categories.no_listings") || "No listings yet"}</h2>
           <p className="text-muted-foreground text-sm mt-2 max-w-[240px]">
-            Be the first to post in <span className="font-semibold text-foreground">{decoded}</span>!
+            {t("categories.be_first") || "Be the first to post in"} <span className="font-semibold text-foreground">{getTranslatedCategory(decoded)}</span>!
           </p>
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => { triggerHaptic("medium"); navigate("/post"); }}
             className="mt-5 px-6 py-3 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/25"
           >
-            Create Listing
+            {t("categories.create_listing") || "Create Listing"}
           </motion.button>
         </motion.div>
-      )}
+      )
+      }
     </div>
   );
 };

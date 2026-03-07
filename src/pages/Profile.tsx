@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { List, Receipt, Settings, ChevronRight, Heart, AlertTriangle, BarChart3, ShieldCheck, Megaphone } from "lucide-react";
 import { useTelegramUser, triggerHaptic } from "@/hooks/useTelegramUser";
+import { useLanguage } from "@/context/LanguageContext";
 import { useAdmin } from "@/hooks/useAdmin";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import { useVerifiedSeller } from "@/hooks/useVerifiedSeller";
@@ -31,6 +32,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const initials = user.first_name.charAt(0).toUpperCase();
   const { data: verifiedData } = useVerifiedSeller(user.id);
+  const { t } = useLanguage();
 
   return (
     <div className="px-5 pt-4">
@@ -49,7 +51,7 @@ const Profile = () => {
           )}
         </div>
         <h1 className="text-xl font-extrabold text-foreground flex items-center gap-1.5">
-          Hi, {user.first_name} 👋
+          {t("home.hi")}, {user.first_name} 👋
           {verifiedData && <VerifiedBadge size="md" />}
         </h1>
         {user.username ? (
@@ -68,9 +70,9 @@ const Profile = () => {
         >
           <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-bold text-foreground">Not connected to Telegram</p>
+            <p className="text-sm font-bold text-foreground">{t("profile.not_connected") || "Not connected to Telegram"}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Please open this app from Telegram to link your account.
+              {t("home.guest_link")}
             </p>
             <button
               onClick={() => {
@@ -79,7 +81,7 @@ const Profile = () => {
               }}
               className="mt-3 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
             >
-              Open in Telegram
+              {t("profile.open_telegram") || "Open in Telegram"}
             </button>
           </div>
         </motion.div>
@@ -107,7 +109,14 @@ const Profile = () => {
 
       {/* Menu */}
       <motion.div variants={container} initial="hidden" animate="show" className="flex flex-col gap-3">
-        {menuItems.map((mi) => {
+        {([
+          { label: t("profile.dashboard"), desc: "Sales stats & analytics", icon: BarChart3, path: "/profile/dashboard" },
+          { label: t("profile.my_listings"), desc: "View and manage your posts", icon: List, path: "/profile/listings" },
+          { label: t("profile.my_ads"), desc: "Manage your sponsored ads", icon: Megaphone, path: "/profile/ads" },
+          { label: t("profile.favorites"), desc: "Listings you've saved", icon: Heart, path: "/favorites" },
+          { label: t("profile.transactions"), desc: "Your purchase & sales history", icon: Receipt, path: "/profile/transactions" },
+          { label: t("profile.settings"), desc: "Account preferences", icon: Settings, path: "/profile/settings" },
+        ]).map((mi) => {
           const Icon = mi.icon;
           return (
             <motion.button
