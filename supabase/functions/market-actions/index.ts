@@ -211,16 +211,17 @@ Deno.serve(async (req) => {
         if (fetchError || !ad) throw new Error("Ad not found");
         if (ad.owner_telegram_id !== userId) throw new Error("Unauthorized");
 
+        const updateData: any = {};
+        if (title !== undefined) updateData.title = title;
+        if (description !== undefined) updateData.description = description;
+        if (link_url !== undefined) updateData.link_url = link_url;
+        if (image_path !== undefined) updateData.image_path = image_path;
+        if (video_path !== undefined) updateData.video_path = video_path;
+        if (image_paths !== undefined) updateData.image_paths = image_paths;
+
         const { data, error } = await supabaseClient
           .from("ads")
-          .update({
-            title,
-            description,
-            link_url,
-            image_path: image_path || null,
-            video_path: video_path || null,
-            image_paths: image_paths || []
-          })
+          .update(updateData)
           .eq("id", id)
           .select()
           .single();

@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Camera, X, Loader2, MapPin } from "lucide-react";
+import { Camera, X, Loader2, MapPin, Navigation } from "lucide-react";
 import { triggerHaptic, useTelegramUser } from "@/hooks/useTelegramUser";
 import { compressImage } from "@/lib/media";
 import { useState, useRef } from "react";
@@ -147,6 +147,16 @@ const PostForm = () => {
         country: userLocation?.country?.code || null,
       };
 
+      if (!userLocation && !city.trim()) {
+         toast({ 
+           title: "Location missing", 
+           description: "Please enter a city or allow location access to help buyers find you.",
+           variant: "destructive" 
+         });
+         setSubmitting(false);
+         return;
+      }
+
       const { data, error } = await supabase.functions.invoke('market-actions', {
         body: {
           action: 'create_listing',
@@ -291,12 +301,25 @@ const PostForm = () => {
         {/* City */}
         <motion.div variants={fadeUp}>
           <label className="text-sm font-bold text-foreground mb-2 block">City / Location</label>
-          <input
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            placeholder="e.g. Downtown, Midtown"
-            className="w-full px-4 py-3.5 rounded-2xl bg-card border border-border/50 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring shadow-sm"
-          />
+          <div className="relative">
+            <input
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="e.g. Downtown, Midtown"
+              className="w-full px-4 py-3.5 rounded-2xl bg-card border border-border/50 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring shadow-sm"
+            />
+            {userLocation ? (
+              <div className="flex items-center gap-1.5 mt-2 px-1 text-[10px] text-primary font-bold">
+                <Navigation className="w-3 h-3 fill-primary/10" />
+                <span>GPS coordinates captured (High accuracy)</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 mt-2 px-1 text-[10px] text-amber-500 font-bold">
+                <MapPin className="w-3 h-3" />
+                <span>Enter city manually (GPS unavailable)</span>
+              </div>
+            )}
+          </div>
         </motion.div>
 
         {/* Submit */}

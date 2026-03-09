@@ -138,9 +138,22 @@ const MyAds = () => {
               className="bg-card rounded-2xl p-4 border border-border/50 shadow-sm"
             >
               <div className="flex gap-3">
-                {ad.image_path && (
-                  <div className="w-16 h-16 rounded-xl bg-secondary shrink-0 overflow-hidden">
-                    <img src={ad.image_path} alt={ad.title} className="w-full h-full object-cover" />
+                {(ad.video_path || ad.image_path || (ad.image_paths && ad.image_paths.length > 0)) && (
+                  <div className="w-16 h-16 rounded-xl bg-secondary shrink-0 overflow-hidden relative">
+                    {ad.video_path ? (
+                      <video src={ad.video_path} className="w-full h-full object-cover" muted />
+                    ) : (
+                      <img 
+                        src={ad.image_path || ad.image_paths?.[0]} 
+                        alt={ad.title} 
+                        className="w-full h-full object-cover" 
+                      />
+                    )}
+                    {(ad.image_paths?.length > 1 || (ad.image_path && ad.video_path)) && (
+                      <div className="absolute bottom-1 right-1 px-1 rounded bg-black/40 text-[8px] text-white">
+                        +{ad.image_paths?.length || 1}
+                      </div>
+                    )}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">

@@ -122,25 +122,51 @@ const Explore = () => {
       );
     }
 
+    const now = new Date();
+
     const withDistance = results.map((l) => {
       let dist: number | null = null;
       if (location && l.latitude && l.longitude) {
         dist = haversineDistance(location.latitude, location.longitude, l.latitude, l.longitude);
       }
-      return { ...l, _dist: dist };
+      const isBoosted = l.boosted_until && new Date(l.boosted_until) > now;
+      return { ...l, _dist: dist, _isBoosted: isBoosted };
     });
 
     let final = location
       ? withDistance.filter((l) => l._dist === null || l._dist <= maxDistance)
       : withDistance;
 
-    if (sort === "nearest" && location) {
-      final.sort((a, b) => (a._dist ?? 99999) - (b._dist ?? 99999));
-    } else if (sort === "price_asc") {
-      final.sort((a, b) => (a.price || 0) - (b.price || 0));
-    } else if (sort === "price_desc") {
-      final.sort((a, b) => (b.price || 0) - (a.price || 0));
-    }
+    // Multi-criteria Sort
+    final.sort((a, b) => {
+      // 1. Boosted Status (Always First)
+      if (a._isBoosted !== b._isBoosted) {
+        return a._isBoosted ? -1 : 1;
+      }
+
+      // 2. Sort Selection
+      if (sort === "nearest" && location) {
+        // Nearest sort
+        const distA = a._dist ?? 999999;
+        const distB = b._dist ?? 999999;
+        if (distA !== distB) return distA - distB;
+      } else if (sort === "price_asc") {
+        if ((a.price || 0) !== (b.price || 0)) return (a.price || 0) - (b.price || 0);
+      } else if (sort === "price_desc") {
+        if ((a.price || 0) !== (b.price || 0)) return (b.price || 0) - (a.price || 0);
+      }
+
+      // 3. Fallback: Distance (if sort isn't nearest but location is known, we still prefer closer items as a secondary sort)
+      if (location && sort !== "nearest") {
+         const distA = a._dist ?? 999999;
+         const distB = b._dist ?? 999999;
+         // If distance delta is significant (e.g. > 1km), prefer closer
+         if (Math.abs(distA - distB) > 1) return distA - distB;
+      }
+
+      // 4. Final: Date (Newest)
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
     return final;
   }, [allListings, activeCategory, query, sort, location, maxDistance]);
