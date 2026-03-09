@@ -69,11 +69,19 @@ Deno.serve(async (req) => {
     }
 
     async function notifyAdmins(title: string, message: string, listingId?: string) {
-      const { data: admins } = await supabaseClient.from("bot_users").select("telegram_id").eq("is_admin", true);
-      if (admins) {
-        for (const admin of admins) {
-          await sendPush(admin.telegram_id, title, message, listingId);
+      try {
+        const { data: admins, error } = await supabaseClient.from("bot_users").select("telegram_id").eq("is_admin", true);
+        if (error) {
+          console.error("Error fetching admins:", error);
+          return;
         }
+        if (admins) {
+          for (const admin of admins) {
+            await sendPush(admin.telegram_id, title, message, listingId);
+          }
+        }
+      } catch (err) {
+        console.error("notifyAdmins failed:", err);
       }
     }
     // --- End Helpers ---
@@ -143,7 +151,7 @@ Deno.serve(async (req) => {
       }
 
       case "create_ad": {
-        const { title, description, link_url, stars_paid, image_path, video_path, image_paths } = payload;
+        const { title, description, link_url, stars_paid, duration_days, image_path, video_path, image_paths } = payload;
 
         const { data, error } = await supabaseClient
           .from("ads")
@@ -153,6 +161,7 @@ Deno.serve(async (req) => {
             description,
             link_url,
             stars_paid,
+            duration_days: duration_days || 1,
             image_path,
             video_path,
             image_paths: image_paths || [],

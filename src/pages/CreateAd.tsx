@@ -105,6 +105,7 @@ const CreateAd = () => {
         description: description.trim() || null,
         link_url: linkUrl.trim() || null,
         stars_paid: stars,
+        duration_days: days,
       };
 
       const { data, error } = await supabase.functions.invoke('market-actions', {

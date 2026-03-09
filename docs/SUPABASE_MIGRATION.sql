@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS public.ads (
   link_url text,
   duration_days integer NOT NULL DEFAULT 1,
   stars_paid integer NOT NULL DEFAULT 0,
+  image_paths text[] DEFAULT '{}',
   status text NOT NULL DEFAULT 'pending',  -- pending | active | paused | expired
   starts_at timestamptz,
   expires_at timestamptz,
