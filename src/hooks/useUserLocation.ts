@@ -5,6 +5,22 @@ export interface UserLocation {
   latitude: number;
   longitude: number;
   country?: CountryInfo;
+  city?: string;
+}
+
+/**
+ * Approximate city detection for major areas (Nigeria)
+ */
+export function detectCityFromCoords(lat: number, lng: number): string | undefined {
+  // Abuja bounding box
+  if (lat >= 8.8 && lat <= 9.3 && lng >= 7.0 && lng <= 7.8) return "Abuja";
+  // Lagos bounding box
+  if (lat >= 6.3 && lat <= 6.8 && lng >= 3.0 && lng <= 3.8) return "Lagos";
+  // Port Harcourt
+  if (lat >= 4.7 && lat <= 5.0 && lng >= 6.9 && lng <= 7.2) return "Port Harcourt";
+  // Kano
+  if (lat >= 11.8 && lat <= 12.2 && lng >= 8.4 && lng <= 8.7) return "Kano";
+  return undefined;
 }
 
 const LOCATION_CACHE_KEY = "trustpay_user_location";
@@ -83,7 +99,8 @@ export function useUserLocation() {
           lm.getLocation((data: any) => {
             if (data?.latitude && data?.longitude) {
               const country = detectCountryFromCoords(data.latitude, data.longitude);
-              resolve({ latitude: data.latitude, longitude: data.longitude, country });
+              const city = detectCityFromCoords(data.latitude, data.longitude);
+              resolve({ latitude: data.latitude, longitude: data.longitude, country, city });
             } else {
               reject(new Error("Failed to get location from Telegram"));
             }
@@ -110,10 +127,12 @@ export function useUserLocation() {
       });
 
       const country = detectCountryFromCoords(pos.coords.latitude, pos.coords.longitude);
+      const city = detectCityFromCoords(pos.coords.latitude, pos.coords.longitude);
       const loc: UserLocation = {
         latitude: pos.coords.latitude,
         longitude: pos.coords.longitude,
         country,
+        city,
       };
       setLocation(loc);
       cacheLocation(loc);

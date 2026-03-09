@@ -123,18 +123,33 @@ const Explore = () => {
     }
 
     const now = new Date();
+    const userCity = location?.city?.toLowerCase();
 
     const withDistance = results.map((l) => {
       let dist: number | null = null;
+      let isCityMatch = false;
+
+      // 1. Precise Coordinate Distance
       if (location && l.latitude && l.longitude) {
         dist = haversineDistance(location.latitude, location.longitude, l.latitude, l.longitude);
+      } 
+      
+      // 2. City String Fallback (if coords missing or extremely far)
+      if (userCity && l.city) {
+        const itemCity = l.city.toLowerCase();
+        if (itemCity.includes(userCity) || userCity.includes(itemCity)) {
+          isCityMatch = true;
+          // If no distance, give it a "virtual" close distance (e.g. 5km)
+          if (dist === null) dist = 5; 
+        }
       }
+
       const isBoosted = l.boosted_until && new Date(l.boosted_until) > now;
-      return { ...l, _dist: dist, _isBoosted: isBoosted };
+      return { ...l, _dist: dist, _isBoosted: isBoosted, _isCityMatch: isCityMatch };
     });
 
     let final = location
-      ? withDistance.filter((l) => l._dist === null || l._dist <= maxDistance)
+      ? withDistance.filter((l) => l._dist === null || l._dist <= maxDistance || l._isCityMatch)
       : withDistance;
 
     // Multi-criteria Sort
@@ -144,9 +159,13 @@ const Explore = () => {
         return a._isBoosted ? -1 : 1;
       }
 
-      // 2. Sort Selection
+      // 2. Exact City Match Priority (for listings without precise coords)
+      if (location && a._isCityMatch !== b._isCityMatch) {
+        return a._isCityMatch ? -1 : 1;
+      }
+
+      // 3. User Selected Sort Selection
       if (sort === "nearest" && location) {
-        // Nearest sort
         const distA = a._dist ?? 999999;
         const distB = b._dist ?? 999999;
         if (distA !== distB) return distA - distB;
@@ -156,15 +175,15 @@ const Explore = () => {
         if ((a.price || 0) !== (b.price || 0)) return (b.price || 0) - (a.price || 0);
       }
 
-      // 3. Fallback: Distance (if sort isn't nearest but location is known, we still prefer closer items as a secondary sort)
+      // 4. Fallback: Distance (Proximity preference even in 'newest' sort)
       if (location && sort !== "nearest") {
          const distA = a._dist ?? 999999;
          const distB = b._dist ?? 999999;
-         // If distance delta is significant (e.g. > 1km), prefer closer
-         if (Math.abs(distA - distB) > 1) return distA - distB;
+         // If one is significantly closer (> 10km diff), prefer closer
+         if (Math.abs(distA - distB) > 10) return distA - distB;
       }
 
-      // 4. Final: Date (Newest)
+      // 5. Final: Date (Newest)
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
@@ -262,7 +281,7 @@ const Explore = () => {
         </AnimatePresence>
       </motion.div>
 
-      {/* Sort options */}
+      {/* Sort options & Location Indicator */}
       {showSort && (
         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-3 overflow-hidden space-y-3">
           <div className="flex gap-2 flex-wrap">
@@ -279,15 +298,33 @@ const Explore = () => {
               </button>
             ))}
           </div>
-          {location && (
-            <div className="flex items-center gap-3 bg-card rounded-2xl px-4 py-3 border border-border/50">
-              <Navigation className="w-4 h-4 text-primary shrink-0" />
-              <div className="flex-1">
-                <p className="text-xs text-muted-foreground mb-1.5">Within {maxDistance} km</p>
-                <Slider value={[maxDistance]} onValueChange={(v) => setMaxDistance(v[0])} min={1} max={200} step={1} />
+          
+          <div className="flex flex-col gap-2">
+            {location && (
+              <div className="flex items-center gap-3 bg-card rounded-2xl px-4 py-3 border border-border/50">
+                <Navigation className="w-4 h-4 text-primary shrink-0" />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs text-muted-foreground">Within {maxDistance} km</p>
+                    {location.city && (
+                      <span className="text-[10px] font-bold text-primary px-2 py-0.5 rounded-full bg-primary/10">
+                        📍 {location.city} detected
+                      </span>
+                    )}
+                  </div>
+                  <Slider value={[maxDistance]} onValueChange={(v) => setMaxDistance(v[0])} min={1} max={200} step={1} />
+                </div>
               </div>
-            </div>
-          )}
+            )}
+            {!location && (
+              <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-2xl p-3 flex items-center gap-3">
+                <MapPin className="w-4 h-4 text-amber-500" />
+                <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">
+                  Enable location for better results. Sorting by newest first.
+                </p>
+              </div>
+            )}
+          </div>
         </motion.div>
       )}
 
