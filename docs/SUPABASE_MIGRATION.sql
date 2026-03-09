@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.bot_users (
   latitude double precision,
   longitude double precision,
   is_admin boolean NOT NULL DEFAULT false,
+  photo_url text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 

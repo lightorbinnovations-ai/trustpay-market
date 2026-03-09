@@ -61,29 +61,23 @@ const ListingDetails = () => {
       const initData = (window as any).Telegram?.WebApp?.initData;
       if (!initData) throw new Error("Telegram authentication missing");
 
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-      const res = await fetch(`${supabaseUrl}/functions/v1/market-actions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${supabaseKey}`,
-          "x-telegram-init-data": initData,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('market-actions', {
+        body: {
           action: "mark_as_bought",
           payload: {
             listing_id: listing.id,
             seller_telegram_id: listing.seller_telegram_id,
             amount: listing.price || 0,
           },
-        }),
+        },
+        headers: {
+          "x-telegram-init-data": initData,
+        },
       });
 
-      const json = await res.json();
-      if (!res.ok || json?.error) throw new Error(json?.error || "Failed to complete");
-      return json;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
     },
     onSuccess: (data) => {
       triggerHaptic("heavy");
@@ -114,25 +108,19 @@ const ListingDetails = () => {
       const initData = (window as any).Telegram?.WebApp?.initData;
       if (!initData) throw new Error("Telegram authentication missing");
 
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-      const res = await fetch(`${supabaseUrl}/functions/v1/market-actions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${supabaseKey}`,
-          "x-telegram-init-data": initData,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('market-actions', {
+        body: {
           action: "mark_listing_sold",
           payload: { listing_id: listing.id },
-        }),
+        },
+        headers: {
+          "x-telegram-init-data": initData,
+        },
       });
 
-      const json = await res.json();
-      if (!res.ok || json?.error) throw new Error(json?.error || "Failed to update listing");
-      return json;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
     },
     onSuccess: () => {
       triggerHaptic("heavy");

@@ -66,11 +66,24 @@ const WELCOME_SENT_KEY = "trustpay_welcome_sent";
 /** Upsert user into bot_users table so their username & name are always current */
 const syncUserToDb = async (user: TelegramUser, isNew: boolean) => {
   try {
+    // Get location from localStorage if available (cached by useUserLocation)
+    const cachedLoc = localStorage.getItem("trustpay_user_location");
+    let lat: number | null = null;
+    let lon: number | null = null;
+    if (cachedLoc) {
+      const parsed = JSON.parse(cachedLoc);
+      lat = parsed.latitude;
+      lon = parsed.longitude;
+    }
+
     await supabase.from("bot_users").upsert(
       {
         telegram_id: user.id,
         first_name: user.first_name,
         username: user.username ?? null,
+        photo_url: user.photo_url ?? null,
+        latitude: lat,
+        longitude: lon,
       },
       { onConflict: "telegram_id" }
     );

@@ -22,6 +22,7 @@ export type Database = {
           expires_at: string | null
           id: string
           image_path: string | null
+          image_paths: string[] | null
           link_url: string | null
           owner_telegram_id: number
           stars_paid: number
@@ -37,6 +38,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           image_path?: string | null
+          image_paths?: string[] | null
           link_url?: string | null
           owner_telegram_id: number
           stars_paid?: number
@@ -52,6 +54,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           image_path?: string | null
+          image_paths?: string[] | null
           link_url?: string | null
           owner_telegram_id?: number
           stars_paid?: number
@@ -68,8 +71,10 @@ export type Database = {
           created_at: string
           first_name: string | null
           id: string
+          is_admin: boolean
           latitude: number | null
           longitude: number | null
+          photo_url: string | null
           telegram_id: number
           username: string | null
         }
@@ -78,8 +83,10 @@ export type Database = {
           created_at?: string
           first_name?: string | null
           id?: string
+          is_admin?: boolean
           latitude?: number | null
           longitude?: number | null
+          photo_url?: string | null
           telegram_id: number
           username?: string | null
         }
@@ -88,8 +95,10 @@ export type Database = {
           created_at?: string
           first_name?: string | null
           id?: string
+          is_admin?: boolean
           latitude?: number | null
           longitude?: number | null
+          photo_url?: string | null
           telegram_id?: number
           username?: string | null
         }
