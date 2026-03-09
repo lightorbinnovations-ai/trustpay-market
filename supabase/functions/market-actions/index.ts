@@ -29,6 +29,55 @@ Deno.serve(async (req) => {
     const tgUser = validateTelegramWebAppData(initData, botToken);
     const userId = tgUser.id; // Keep as number
 
+    // --- Notification Helpers ---
+    async function sendPush(recipientId: number, title: string, message: string, listingId?: string) {
+      try {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: recipientId,
+            text: `*${title.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, "\\$1")}*\n\n${message.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, "\\$1")}`,
+            parse_mode: "MarkdownV2",
+            reply_markup: listingId ? {
+              inline_keyboard: [[{ text: "View Listing", url: `https://t.me/TrustPayMarketsBot?start=listing_${listingId}` }]]
+            } : undefined
+          })
+        });
+      } catch (e) {
+        console.error("Push failed:", e);
+      }
+    }
+
+    async function createNotification(params: {
+      recipient_id: number;
+      type: string;
+      title: string;
+      message: string;
+      listing_id?: string;
+      sender_id?: number;
+    }) {
+      await supabaseClient.from("notifications").insert({
+        recipient_telegram_id: params.recipient_id,
+        type: params.type,
+        title: params.title,
+        message: params.message,
+        listing_id: params.listing_id || null,
+        sender_telegram_id: params.sender_id || null,
+      });
+      await sendPush(params.recipient_id, params.title, params.message, params.listing_id);
+    }
+
+    async function notifyAdmins(title: string, message: string, listingId?: string) {
+      const { data: admins } = await supabaseClient.from("bot_users").select("telegram_id").eq("is_admin", true);
+      if (admins) {
+        for (const admin of admins) {
+          await sendPush(admin.telegram_id, title, message, listingId);
+        }
+      }
+    }
+    // --- End Helpers ---
+
     // 2. Parse Payload
     const { action, payload } = await req.json();
     let result;
@@ -49,6 +98,10 @@ Deno.serve(async (req) => {
           .single();
 
         if (error) throw error;
+
+        // Notify Admins
+        await notifyAdmins("New Listing! 🆕", `A new listing "${title}" has been posted in ${city || "General"}.`, data.id);
+
         result = { success: true, listing: data };
         break;
       }
@@ -109,6 +162,10 @@ Deno.serve(async (req) => {
           .single();
 
         if (error) throw error;
+
+        // Notify Admins
+        await notifyAdmins("New Ad Submitted 📢", `A new ad "${title}" is pending approval.`, undefined);
+
         result = { success: true, ad: data };
         break;
       }
@@ -232,10 +289,20 @@ Deno.serve(async (req) => {
             amount: amount || 0,
             status: "released"
           })
-          .select()
+          .select("*, listings(title)")
           .single();
 
         if (txError) throw txError;
+
+        // Notify the seller via DB + Push
+        await createNotification({
+          recipient_id: seller_telegram_id,
+          type: "transaction_started",
+          title: "Item Sold! 🎉",
+          message: `Someone just marked your item "${tx.listings?.title || "Listing"}" as bought! Check your transactions.`,
+          listing_id,
+          sender_id: userId,
+        });
 
         // NOTE: Listing stays "active" — only the seller can mark it as "sold"
         result = { success: true, transaction: tx };
@@ -276,6 +343,29 @@ Deno.serve(async (req) => {
 
         const { error } = await supabaseClient.from("transactions").update({ status }).eq("id", id);
         if (error) throw error;
+
+        // Notify both parties (fetching tx details first)
+        const { data: fullTx } = await supabaseClient
+          .from("transactions")
+          .select("*, listings(title)")
+          .eq("id", id)
+          .single();
+
+        if (fullTx) {
+          const title = "Transaction Updated 🔄";
+          const msg = `Transaction for "${fullTx.listings?.title || "Listing"}" changed to: ${status}`;
+          
+          // Notify Seller if status changed by Buyer
+          await createNotification({
+            recipient_id: fullTx.seller_telegram_id,
+            type: `transaction_${status}`,
+            title,
+            message: msg,
+            listing_id: fullTx.listing_id,
+            sender_id: userId
+          });
+        }
+
         result = { success: true };
         break;
       }

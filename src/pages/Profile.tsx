@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { List, Receipt, Settings, ChevronRight, Heart, AlertTriangle, BarChart3, ShieldCheck, Megaphone } from "lucide-react";
+import { List, Receipt, Settings, ChevronRight, Heart, AlertTriangle, ShieldCheck, Megaphone } from "lucide-react";
 import { useTelegramUser, triggerHaptic } from "@/hooks/useTelegramUser";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -8,7 +8,6 @@ import VerifiedBadge from "@/components/VerifiedBadge";
 import { useVerifiedSeller } from "@/hooks/useVerifiedSeller";
 
 const menuItems = [
-  { label: "Dashboard", desc: "Sales stats & analytics", icon: BarChart3, path: "/profile/dashboard" },
   { label: "My Listings", desc: "View and manage your posts", icon: List, path: "/profile/listings" },
   { label: "My Ads", desc: "Manage your sponsored ads", icon: Megaphone, path: "/profile/ads" },
   { label: "My Favorites", desc: "Listings you've saved", icon: Heart, path: "/favorites" },
@@ -110,7 +109,6 @@ const Profile = () => {
       {/* Menu */}
       <motion.div variants={container} initial="hidden" animate="show" className="flex flex-col gap-3">
         {([
-          { label: t("profile.dashboard"), desc: "Sales stats & analytics", icon: BarChart3, path: "/profile/dashboard" },
           { label: t("profile.my_listings"), desc: "View and manage your posts", icon: List, path: "/profile/listings" },
           { label: t("profile.my_ads"), desc: "Manage your sponsored ads", icon: Megaphone, path: "/profile/ads" },
           { label: t("profile.favorites"), desc: "Listings you've saved", icon: Heart, path: "/favorites" },

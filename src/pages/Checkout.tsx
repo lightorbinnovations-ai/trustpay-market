@@ -39,12 +39,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { user } = useTelegramUser();
 
-  useEffect(() => {
-    // Escrow is coming soon, redirect if someone somehow lands here
-    navigate("/home");
-  }, [navigate]);
-
-  const queryClient = useQueryClient();
+  // Real-time subscription for transaction status changes
   const thumbnail = useListingThumbnail(listingId);
 
   const { data: listing, isLoading } = useQuery({

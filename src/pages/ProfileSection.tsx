@@ -3,11 +3,9 @@ import { motion } from "framer-motion";
 import MyListings from "@/components/profile/MyListings";
 import MyTransactions from "@/components/profile/MyTransactions";
 import SettingsPage from "@/components/profile/SettingsPage";
-import SellerDashboard from "@/components/profile/SellerDashboard";
 import MyAds from "@/components/profile/MyAds";
 
 const sections: Record<string, { title: string; component: React.FC }> = {
-  dashboard: { title: "Dashboard", component: SellerDashboard },
   listings: { title: "My Listings", component: MyListings },
   ads: { title: "My Ads", component: MyAds },
   transactions: { title: "My Transactions", component: MyTransactions },

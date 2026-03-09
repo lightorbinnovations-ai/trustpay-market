@@ -44,8 +44,6 @@ const container = {
 const statusOptions = [
   { value: "active", label: "Active", desc: "Visible to everyone" },
   { value: "sold", label: "Sold", desc: "Hidden, marked as sold" },
-  { value: "private", label: "Private", desc: "Hidden from public" },
-  { value: "paused", label: "Paused", desc: "Temporarily hidden" },
 ];
 
 const MyListings = () => {
@@ -166,9 +164,8 @@ const MyListings = () => {
             <motion.div
               key={item.id}
               variants={fadeUp}
-              className={`bg-card rounded-2xl p-4 border shadow-sm ${
-                isBoosted ? "border-primary/40 ring-1 ring-primary/20" : "border-border/50"
-              }`}
+              className={`bg-card rounded-2xl p-4 border shadow-sm ${isBoosted ? "border-primary/40 ring-1 ring-primary/20" : "border-border/50"
+                }`}
             >
               <div
                 className="flex gap-4 cursor-pointer"

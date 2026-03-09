@@ -9,6 +9,16 @@ import { useActiveAds } from "@/hooks/useActiveAds";
 import AdCard from "@/components/AdCard";
 import { useLanguage } from "@/context/LanguageContext";
 
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.1 } },
+};
+
+const card = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+};
+
 const Categories = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();

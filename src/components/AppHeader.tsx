@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/sheet";
 
 const menuItems = [
-  { label: "Dashboard", desc: "Sales stats & analytics", icon: BarChart3, path: "/profile/dashboard" },
   { label: "My Listings", desc: "View and manage your posts", icon: List, path: "/profile/listings" },
   { label: "My Ads", desc: "Manage your sponsored ads", icon: Megaphone, path: "/profile/ads" },
   { label: "My Favorites", desc: "Listings you've saved", icon: Heart, path: "/favorites" },

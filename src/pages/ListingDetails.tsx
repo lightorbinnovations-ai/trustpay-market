@@ -91,7 +91,13 @@ const ListingDetails = () => {
         setNewTransactionId(data.transaction.id);
         setIsReviewOpen(true);
       } else {
-        toast.success(t("listing.success_msg") || "Purchase recorded! 🎉", { description: t("listing.success_desc") || "The seller will be notified. Your transaction has been saved." });
+        toast.success(t("listing.success_msg") || "Purchase recorded! 🎉", { 
+          description: t("listing.success_desc") || "The seller has been notified. Your transaction has been saved to your history.",
+          action: {
+            label: "View Transactions",
+            onClick: () => navigate("/profile/transactions")
+          }
+        });
       }
       queryClient.invalidateQueries({ queryKey: ["listing", id] });
       queryClient.invalidateQueries({ queryKey: ["my-transactions"] });

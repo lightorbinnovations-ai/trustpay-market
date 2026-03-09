@@ -22,8 +22,6 @@ const categoryOptions = [
 const statusOptions = [
   { value: "active", label: "Active – Visible to everyone" },
   { value: "sold", label: "Sold – Hidden, marked as sold" },
-  { value: "private", label: "Private – Hidden from public" },
-  { value: "paused", label: "Paused – Temporarily hidden" },
 ];
 
 const EditListing = () => {
